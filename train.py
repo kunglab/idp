@@ -21,12 +21,15 @@ parser.add_argument('--out', '-o', default='result',
 args = parser.parse_args()
 train, test = get_mnist(ndim=3)
 model = net.BinConvNet(10)
-do_type = 'random'
+do_type = 'ordered'
 util.train_model(model, train, test, args)
 xf = bst(util.get_approx(model, test, 0, do_type)).data
 xs, ratios = [], []
+xis = []
 for ratio in np.linspace(0, 1, 100):
-    x = bst(util.get_approx(model, test, ratio, do_type)).data
+    x = util.get_approx(model, test, ratio, do_type)
+    xis.append(x[10,10,10,10])
+    x = bst(x).data
     alike = util.pct_alike(x, xf)
     xs.append(alike*100.)
     ratios.append((1 - ratio)*100.)
@@ -38,3 +41,13 @@ plt.xlabel("percent elements used in dot-product")
 plt.tight_layout()
 plt.grid()
 plt.savefig("figures/out_" + do_type + ".png", dpi=300)
+plt.clf()
+
+plt.plot(ratios, xis)
+plt.plot(ratios, np.zeros(len(ratios)), '--', color='k')
+plt.ylabel("preactivation of single output")
+plt.xlabel("percent elements used in dot-product")
+plt.tight_layout()
+plt.grid()
+plt.savefig("figures/out_single_" + do_type + ".png", dpi=300)
+plt.clf()

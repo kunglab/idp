@@ -21,6 +21,9 @@ from chainer import cuda
 from chainer import function
 from chainer.utils import type_check
 
+def pct_alike(x, y):
+    x, y = x.flatten(), y.flatten()
+    return len(np.where(x == y)[0]) / float(len(x))
 
 def get_acc(model, dataset_tuple, ret_param='acc0', batchsize=128, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
@@ -35,6 +38,13 @@ def get_acc(model, dataset_tuple, ret_param='acc0', batchsize=128, gpu=0):
         acc = acc_data.data
         accs += acc*len(x_batch)
     return (accs / len(x)) * 100.
+
+def get_approx(model, dataset_tuple, ratio, do_type, batchsize=128, gpu=0):
+    xp = np if gpu < 0 else cuda.cupy
+    x, _ = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
+    for i in range(0, len(x), batchsize):
+        x_batch = xp.array(x[i:i+batchsize])
+        return model.approx(x_batch, ratio, do_type)
 
 def get_class_acc(model, dataset_tuple, batchsize=128, gpu=0):
     xp = np if gpu < 0 else cuda.cupy

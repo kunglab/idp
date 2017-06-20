@@ -39,12 +39,26 @@ def get_acc(model, dataset_tuple, ret_param='acc0', batchsize=128, gpu=0):
         accs += acc*len(x_batch)
     return (accs / len(x)) * 100.
 
-def get_approx(model, dataset_tuple, ratio, do_type, batchsize=128, gpu=0):
+def get_approx_acc(model, dataset_tuple, ratio, do_type, batchsize=128, gpu=0):
+    xp = np if gpu < 0 else cuda.cupy
+    x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
+    accs = 0
+    model.train = False
+    for i in range(0, len(x), batchsize):
+        x_batch = xp.array(x[i:i+batchsize])
+        y_batch = xp.array(y[i:i+batchsize])
+        acc_data = model.approx(x_batch, y_batch, ratio=ratio, do_type=do_type)
+        acc_data.to_cpu()
+        acc = acc_data.data
+        accs += acc*len(x_batch)
+    return (accs / len(x)) * 100.
+
+def get_layer(model, dataset_tuple, layer, batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
     x, _ = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     for i in range(0, len(x), batchsize):
         x_batch = xp.array(x[i:i+batchsize])
-        return model.approx(x_batch, ratio, do_type)
+        return model.layer(x_batch, layer)
 
 def get_class_acc(model, dataset_tuple, batchsize=128, gpu=0):
     xp = np if gpu < 0 else cuda.cupy

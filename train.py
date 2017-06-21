@@ -44,7 +44,7 @@ def compute_filter_match(model, dataset, filter, do_type, ratios):
 def compute_approx(model, dataset):
     do_type = 'random'
     accs = []
-    ratios = np.linspace(0, 0.95, 20)
+    ratios = np.linspace(0, 0.5, 10)
     for ratio in ratios:
         acc = util.get_approx_acc(model, test, do_type=do_type, ratio=ratio)
         accs.append(acc)
@@ -68,7 +68,7 @@ accs, ratios = compute_approx(model, test)
 visualize.approx_acc(accs, ratios)
 assert False
 
-ones_filter = cupy.ones((1, 32, 3, 3))
+ones_filter = cupy.ones((1, 16, 3, 3))
 
 hs = compute_filter_match(model, test, ones_filter, 'random', ratios)
 visualize.conv_approx(hs, ratios, 'ones')

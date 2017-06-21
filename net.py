@@ -15,7 +15,7 @@ import numpy as np
 from binary.blinear import BinaryLinear
 from binary.bconv import BinaryConvolution2D
 from binary.function_binary_convolution_2d import binary_convolution_2d
-from binary.bst import bst
+from binary.bst import bst, mbst
 
 def ordered_do(x, ratio):
     shape = x.shape
@@ -63,15 +63,15 @@ class BinConvNet(chainer.Chain):
         super(BinConvNet, self).__init__()
         self.n_out = n_out
         with self.init_scope():
-            self.l1 = BinaryConvolution2D(128, 3, pad=1)
-            self.bn1 = L.BatchNormalization(128)
-            self.l2 = BinaryConvolution2D(256, 3, pad=1)
-            self.bn2 = L.BatchNormalization(256)
+            self.l1 = BinaryConvolution2D(32, 3, pad=1)
+            self.bn1 = L.BatchNormalization(32)
+            self.l2 = BinaryConvolution2D(64, 3, pad=1)
+            self.bn2 = L.BatchNormalization(64)
             self.l3 = BinaryLinear(n_out)
 
     def __call__(self, x, t, ret_param='loss'):
-        h = bst(self.bn1(self.l1(x)))
-        h = bst(self.bn2(self.l2(h)))
+        h = mbst(self.bn1(self.l1(x)), 2)
+        h = mbst(self.bn2(self.l2(h)), 2)
         h = self.l3(h)
 
         report = {
@@ -83,9 +83,9 @@ class BinConvNet(chainer.Chain):
         return report[ret_param]
 
     def approx(self, x, t, ratio, do_type):
-        h = bst(self.bn1(self.l1(x)))
+        h = mbst(self.bn1(self.l1(x)), 2)
         h = conv_do(self.l2, h, ratio=ratio, do_type=do_type)
-        h = bst(self.bn2(h))
+        h = mbst(self.bn2(h), 2)
         h = self.l3(h)
         return F.accuracy(h, t)
 

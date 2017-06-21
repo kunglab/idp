@@ -44,7 +44,7 @@ def compute_filter_match(model, dataset, filter, do_type, ratios):
 def compute_approx(model, dataset):
     do_type = 'random'
     accs = []
-    ratios = np.linspace(0, 0.5, 10)
+    ratios = np.linspace(0, 0.25, 5)
     for ratio in ratios:
         acc = util.get_approx_acc(model, test, do_type=do_type, ratio=ratio)
         accs.append(acc)
@@ -61,11 +61,15 @@ parser.add_argument('--out', '-o', default='result',
                     help='Directory to output the result')
 args = parser.parse_args()
 train, test = get_mnist(ndim=3)
-
-model = net.BinConvNet(10)
-util.train_model(model, train, test, args)
-accs, ratios = compute_approx(model, test)
-visualize.approx_acc(accs, ratios)
+ms = [0.5, 1, 2, 3, 4]
+acc_dict = {}
+for m in ms:
+    key = str(m)
+    model = net.ApproxNet(10, m=m)
+    util.train_model(model, train, test, args)
+    accs, ratios = compute_approx(model, test)
+    acc_dict[key] = accs
+visualize.approx_acc(acc_dict, ratios)
 assert False
 
 ones_filter = cupy.ones((1, 16, 3, 3))

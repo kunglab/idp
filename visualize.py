@@ -17,30 +17,24 @@ def add_colorbar(im, aspect=20, pad_fraction=0.5, **kwargs):
     plt.sca(current_ax)
     return im.axes.figure.colorbar(im, cax=cax, **kwargs)
 
-def approx_acc(accs, ratios, folder='figures/', ext='.png'):
+def approx_acc(acc_dict, ratios, folder='figures/', ext='.png'):
     #pathlib.Path(folder).mkdir(parents=True, exist_ok=True) 
-    try:
-        pathlib.Path(folder).mkdir(parents=True) 
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise 
-    plt.plot(ratios, accs, '-o')
-    plt.ylabel("classification accuracy")
-    plt.xlabel("% components used")
-    plt.tight_layout()
-    plt.grid()
-    plt.savefig("{}acc{}".format(folder, ext), dpi=300)
+    keys = list(acc_dict.keys())
+    keys.sort(key=float)
+    for key in keys:
+        plt.plot(ratios, acc_dict[key], '-o', label=key)
+        plt.ylabel("classification accuracy")
+        plt.xlabel("% components used")
+        plt.legend(loc=0)
+        plt.tight_layout()
+        plt.grid()
+        plt.savefig("{}acc{}".format(folder, ext), dpi=300)
 
 def conv_approx(hs, ratios, save_name, folder='figures/slices/', ext='.png'):
     vmax = np.max([np.max(h) for h in hs])
     vmin = np.min([np.min(h) for h in hs])
     print(vmax)
     #pathlib.Path(folder).mkdir(parents=True, exist_ok=True) 
-    try:
-        pathlib.Path(folder).mkdir(parents=True) 
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
     fig, axarr = plt.subplots(1, len(hs))
     for i in range(len(hs)):
         im = axarr[i].imshow(hs[i][0].astype(int), vmin=vmin,
@@ -54,11 +48,6 @@ def conv_approx(hs, ratios, save_name, folder='figures/slices/', ext='.png'):
 
 def layer_01s(l1, l2, folder='figures/', ext='.png'):
     #pathlib.Path(folder).mkdir(parents=True, exist_ok=True) 
-    try:
-        pathlib.Path(folder).mkdir(parents=True) 
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
     plt.plot(l1, label='l1')
     plt.plot(l2, label='l2')
     plt.legend(loc=0)
@@ -69,11 +58,6 @@ def layer_01s(l1, l2, folder='figures/', ext='.png'):
 
 def approx_match(hs, ratios, do_type, folder='figures/', ext='.png'):
     #pathlib.Path(folder).mkdir(parents=True, exist_ok=True) 
-    try:
-        pathlib.Path(folder).mkdir(parents=True) 
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
     plt.plot(ratios, hs)
     plt.ylabel("percent matched output")
     plt.xlabel("percent elements used in dot-product")

@@ -13,7 +13,7 @@ from binary.function_m_binary_convolution_2d import m_binary_convolution_2d
 
 class MBinaryConvolution2D(link.Link):
     def __init__(self, in_channels, out_channels, ksize=None, stride=1, pad=0,
-                 nobias=False, initialW=None, initial_bias=None, **kwargs):
+                 nobias=False, initialW=None, initial_bias=None, m=1, **kwargs):
         super(BinaryConvolution2D, self).__init__()
 
         argument.check_unexpected_kwargs(
@@ -30,6 +30,7 @@ class MBinaryConvolution2D(link.Link):
         self.stride = _pair(stride)
         self.pad = _pair(pad)
         self.out_channels = out_channels
+        self.m = m
 
         with self.init_scope():
             W_initializer = initializers._get_initializer(initialW)
@@ -53,8 +54,8 @@ class MBinaryConvolution2D(link.Link):
     def __call__(self, x):
         if self.W.data is None:
             self._initialize_params(x.shape[1])
-        return binary_convolution_2d(
-            x, self.W, self.b, self.stride, self.pad)
+        return m_binary_convolution_2d(
+            x, self.W, self.b, self.stride, self.pad, m=self.m)
 
 
 def _pair(x):

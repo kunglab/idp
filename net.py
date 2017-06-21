@@ -14,11 +14,13 @@ import numpy as np
 
 from binary.blinear import BinaryLinear
 from binary.bconv import BinaryConvolution2D
+from binary.m_bconv import MBinaryConvolution2D
+from binary.ss_bconv import SSBinaryConvolution2D
 from binary.function_binary_convolution_2d import binary_convolution_2d
 from binary.bst import bst, mbst, mbst_bp
 
 def ordered_do(x, ratio):
-    shape = x.shape
+    shape = x.shapej
     l = int(np.prod(shape))
     n_zeros = int(l * ratio)
     n_ones = l - n_zeros
@@ -58,10 +60,11 @@ def conv_do(layer, x, ratio=0.5, do_type='random'):
     h = binary_convolution_2d(x, mask*layer.W, layer.b, layer.stride, layer.pad)
     return h
 
-class BinConvNet(chainer.Chain):
-    def __init__(self, n_out):
-        super(BinConvNet, self).__init__()
+class ApproxNet(chainer.Chain):
+    def __init__(self, n_out, m):
+        super(ApproxNet, self).__init__()
         self.n_out = n_out
+        self.m = m
         with self.init_scope():
             self.l1 = BinaryConvolution2D(32, 3, pad=1)
             self.bn1 = L.BatchNormalization(32)
@@ -70,8 +73,8 @@ class BinConvNet(chainer.Chain):
             self.l3 = BinaryLinear(n_out)
 
     def __call__(self, x, t, ret_param='loss'):
-        h = mbst_bp(self.bn1(self.l1(x)), 2)
-        h = mbst_bp(self.bn2(self.l2(h)), 2)
+        h = mbst_bp(self.bn1(self.l1(x)), self.m)
+        h = mbst_bp(self.bn2(self.l2(h)), self.m)
         h = self.l3(h)
 
         report = {
@@ -83,9 +86,9 @@ class BinConvNet(chainer.Chain):
         return report[ret_param]
 
     def approx(self, x, t, ratio, do_type):
-        h = mbst_bp(self.bn1(self.l1(x)), 2)
+        h = mbst_bp(self.bn1(self.l1(x)), self.m)
         h = conv_do(self.l2, h, ratio=ratio, do_type=do_type)
-        h = mbst_bp(self.bn2(h), 2)
+        h = mbst_bp(self.bn2(h), self.m)
         h = self.l3(h)
         return F.accuracy(h, t)
 

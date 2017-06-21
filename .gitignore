@@ -100,5 +100,6 @@ ENV/
 # mypy
 .mypy_cache/
 
-_result/
+_result*
+figures
 *.ipynb

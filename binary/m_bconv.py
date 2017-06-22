@@ -14,7 +14,7 @@ from binary.function_m_binary_convolution_2d import m_binary_convolution_2d
 class MBinaryConvolution2D(link.Link):
     def __init__(self, in_channels, out_channels, ksize=None, stride=1, pad=0,
                  nobias=False, initialW=None, initial_bias=None, m=1, **kwargs):
-        super(BinaryConvolution2D, self).__init__()
+        super(MBinaryConvolution2D, self).__init__()
 
         argument.check_unexpected_kwargs(
             kwargs, deterministic="deterministic argument is not "

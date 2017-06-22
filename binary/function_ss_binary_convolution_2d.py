@@ -253,63 +253,6 @@ class SSBinaryConvolution2DFunction(function.Function):
 
 
 def ss_binary_convolution_2d(x, W, b=None, stride=1, pad=0, use_cudnn=True):
-    """Two-dimensional convolution function.
-
-    This is an implementation of two-dimensional binary convolution in ConvNets.
-    It takes three variables: the input image ``x``, the filter weight ``W``,
-    and the bias vector ``b``.
-
-    Notation: here is a notation for dimensionalities.
-
-    - :math:`n` is the batch size.
-    - :math:`c_I` and :math:`c_O` are the number of the input and output,
-      respectively.
-    - :math:`h` and :math:`w` are the height and width of the input image,
-      respectively.
-    - :math:`k_H` and :math:`k_W` are the height and width of the filters,
-      respectively.
-
-    Args:
-        x (~chainer.Variable): Input variable of shape :math:`(n, c_I, h, w)`.
-        W (~chainer.Variable): Weight variable of shape
-            :math:`(c_O, c_I, k_H, k_W)`.
-        b (~chainer.Variable): Bias variable of length :math:`c_O` (optional).
-        stride (int or pair of ints): Stride of filter applications.
-            ``stride=s`` and ``stride=(s, s)`` are equivalent.
-        pad (int or pair of ints): Spatial padding width for input arrays.
-            ``pad=p`` and ``pad=(p, p)`` are equivalent.
-        use_cudnn (bool): If ``True``, then this function uses cuDNN if
-            available.
-
-
-    Returns:
-        ~chainer.Variable: Output variable.
-
-    The two-dimensional convolution function is defined as follows.
-    Then the ``Convolution2D`` function computes correlations between filters
-    and patches of size :math:`(k_H, k_W)` in ``x``.
-    Note that correlation here is equivalent to the inner product between
-    expanded vectors.
-    Patches are extracted at positions shifted by multiples of ``stride`` from
-    the first position ``-pad`` for each spatial axis.
-    The right-most (or bottom-most) patches do not run over the padded spatial
-    size.
-
-    Let :math:`(s_Y, s_X)` be the stride of filter application, and
-    :math:`(p_H, p_W)` the spatial padding size. Then, the output size
-    :math:`(h_O, w_O)` is determined by the following equations:
-
-    .. math::
-
-       h_O &= (h + 2p_H - k_H) / s_Y + 1,\\\\
-       w_O &= (w + 2p_W - k_W) / s_X + 1.
-
-    If the bias vector is given, then it is added to all spatial locations of
-    the output of convolution.
-
-    .. seealso:: :class:`Convolution2D`
-
-    """
     func = SSBinaryConvolution2DFunction(stride, pad, use_cudnn)
     if b is None:
         return func(x, W)

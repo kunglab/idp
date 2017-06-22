@@ -66,9 +66,9 @@ class ApproxNet(chainer.Chain):
         self.n_out = n_out
         self.m = m
         with self.init_scope():
-            self.l1 = BinaryConvolution2D(32, 3, pad=1)
+            self.l1 = SSBinaryConvolution2D(32, 3, pad=1)
             self.bn1 = L.BatchNormalization(32)
-            self.l2 = BinaryConvolution2D(64, 3, pad=1)
+            self.l2 = SSBinaryConvolution2D(64, 3, pad=1)
             self.bn2 = L.BatchNormalization(64)
             self.l3 = BinaryLinear(n_out)
 

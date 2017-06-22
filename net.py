@@ -144,9 +144,8 @@ class ApproxNetSS(chainer.Chain):
         return report[ret_param]
 
     def approx(self, x, t, ratio, do_type):
-        h = mbst_bp(self.bn1(self.l1(x)), self.m)
-        h = conv_do(self.l2, h, ratio=ratio, do_type=do_type)
-        h = mbst_bp(self.bn2(h), self.m)
+        h = mbst_bp(self.bn1(self.l1(x, ratio=ratio)), self.m)
+        h = mbst_bp(self.bn2(self.l2(h, ratio=ratio)), self.m)
         h = self.l3(h)
         return F.accuracy(h, t)
 
@@ -195,9 +194,8 @@ class ApproxNetWW(chainer.Chain):
         return report[ret_param]
 
     def approx(self, x, t, ratio, do_type):
-        h = mbst_bp(self.bn1(self.l1(x)), self.m)
-        h = conv_do(self.l2, h, ratio=ratio, do_type=do_type)
-        h = mbst_bp(self.bn2(h), self.m)
+        h = mbst_bp(self.bn1(self.l1(x, ratio=ratio)), self.m)
+        h = mbst_bp(self.bn2(self.l2(h, ratio=ratio)), self.m)
         h = self.l3(h)
         return F.accuracy(h, t)
 

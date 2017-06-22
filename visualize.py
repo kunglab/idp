@@ -20,7 +20,7 @@ def add_colorbar(im, aspect=20, pad_fraction=0.5, **kwargs):
 def approx_acc(acc_dict, ratios, folder='figures/', ext='.png', prefix=""):
     #pathlib.Path(folder).mkdir(parents=True, exist_ok=True) 
     keys = list(acc_dict.keys())
-    keys.sort(key=float)
+    #keys.sort(key=float)
     for key in keys:
         plt.plot(ratios, acc_dict[key], '-o', label=key)
         plt.ylabel("classification accuracy")

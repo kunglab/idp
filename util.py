@@ -25,7 +25,7 @@ def pct_alike(x, y):
     x, y = x.flatten(), y.flatten()
     return len(np.where(x == y)[0]) / float(len(x))
 
-def get_acc(model, dataset_tuple, ret_param='acc0', batchsize=128, gpu=0):
+def get_acc(model, dataset_tuple, ret_param='acc', batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     accs = 0
@@ -39,7 +39,7 @@ def get_acc(model, dataset_tuple, ret_param='acc0', batchsize=128, gpu=0):
         accs += acc*len(x_batch)
     return (accs / len(x)) * 100.
 
-def get_approx_acc(model, dataset_tuple, ratio, do_type, batchsize=128, gpu=0):
+def get_approx_acc(model, dataset_tuple, ratio, do_type=None, batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     accs = 0

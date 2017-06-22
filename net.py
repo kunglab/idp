@@ -61,7 +61,7 @@ def conv_do(layer, x, ratio=0.5, do_type='random'):
     return h
 
 class ApproxNet(chainer.Chain):
-    def __init__(self, n_out, m):
+    def __init__(self, n_out, m, ratio=0.5):
         super(ApproxNet, self).__init__()
         self.n_out = n_out
         self.m = m
@@ -73,9 +73,14 @@ class ApproxNet(chainer.Chain):
             self.l3 = BinaryLinear(n_out)
 
     def __call__(self, x, t, ret_param='loss'):
-        h = mbst_bp(self.bn1(self.l1(x)), self.m)
-        h = mbst_bp(self.bn2(self.l2(h)), self.m)
-        h = self.l3(h)
+        if chainer.config.train:
+            h = mbst_bp(self.bn1(self.l1(x, ratio=0.5)), self.m)
+            h = mbst_bp(self.bn2(self.l2(h, ratio=0.5)), self.m)
+            h = self.l3(h)
+        else:
+            h = mbst_bp(self.bn1(self.l1(x, ratio=0.5)), self.m)
+            h = mbst_bp(self.bn2(self.l2(h, ratio=0.5)), self.m)
+            h = self.l3(h)
 
         report = {
             'loss': softmax(h, t),

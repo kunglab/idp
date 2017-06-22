@@ -28,12 +28,13 @@ def _pair(x):
         return x
     return x, x
 
-class SSBinaryConvolution2DFunction(function.Function):
-    def __init__(self, stride=1, pad=0, ratio=0.5, use_cudnn=True):
+class WWBinaryConvolution2DFunction(function.Function):
+    def __init__(self, weight, stride=1, pad=0, ratio=0.5, use_cudnn=True):
         self.sy, self.sx = _pair(stride)
         self.ph, self.pw = _pair(pad)
         self.use_cudnn = use_cudnn
         self.ratio = ratio
+        self.weight = weight
 
     def check_type_forward(self, in_types):
         n_in = in_types.size()
@@ -66,13 +67,14 @@ class SSBinaryConvolution2DFunction(function.Function):
         Wb = numpy.where(W>=0, 1, -1).astype(numpy.float32, copy=False)
         # M = numpy.random.randint(2, size=Wb.shape, dtype=numpy.float32)
         
-        M = numpy.random.choice([1, 0],
-                              size=Wb.shape,
-                              p=[self.ratio, 1-self.ratio]).astype(numpy.float32, copy=False)
+        #M = numpy.random.choice([0, 1],
+        #                      size=Wb.shape,
+        #                      p=[self.ratio, 1-self.ratio]).astype(numpy.float32, copy=False)
         
-        #weight = numpy.copy(self.weight)
-        #weight[int(self.ratio*numpy.prod(Wb.shape)):] = 0.
+        weight = numpy.copy(self.weight)
+        weight[int(self.ratio*numpy.prod(Wb.shape)):] = 0.
         
+        M = numpy.asarray(weight,numpy.float32).reshape(Wb.shape)
         self.M = M
         Wb = self.M*Wb
         
@@ -85,16 +87,17 @@ class SSBinaryConvolution2DFunction(function.Function):
         x, W = inputs[:2]
         Wb = _kern()(W)
         
-        M = cuda.cupy.random.choice([1, 0],
-                              size=Wb.shape,
-                              p=[self.ratio, 1-self.ratio]).astype(numpy.float32, copy=False)
+        #M = cuda.cupy.random.choice([0, 1],
+        #                      size=Wb.shape,
+        #                      p=[self.ratio, 1-self.ratio]).astype(numpy.float32, copy=False)
         
         # print('M',self.ratio,M.sum())
         # M = cuda.cupy.random.randint(2, size=Wb.shape, dtype=numpy.float32)
         
-        #weight = numpy.copy(self.weight)
-        #weight[int(self.ratio*numpy.prod(Wb.shape)):] = 0.
+        weight = numpy.copy(self.weight)
+        weight[int(self.ratio*numpy.prod(Wb.shape)):] = 0.
         
+        M = cuda.cupy.asarray(weight,numpy.float32).reshape(Wb.shape)
         self.M = M
         Wb = self.M*Wb
         
@@ -271,8 +274,8 @@ class SSBinaryConvolution2DFunction(function.Function):
             return gx, gW, gb
 
 
-def ss_binary_convolution_2d(x, W, b=None, stride=1, pad=0, ratio=0.5, use_cudnn=True):
-    func = SSBinaryConvolution2DFunction(stride, pad, ratio, use_cudnn)
+def ww_binary_convolution_2d(weight, x, W, b=None, stride=1, pad=0, ratio=0.5, use_cudnn=True):
+    func = WWBinaryConvolution2DFunction(weight, stride, pad, ratio, use_cudnn)
     if b is None:
         return func(x, W)
     else:

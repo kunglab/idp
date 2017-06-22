@@ -10,15 +10,15 @@ from chainer.utils import argument
 from chainer import variable
 from chainer import initializer
 
-from binary.function_ss_binary_convolution_2d import ss_binary_convolution_2d
+from binary.function_ww_binary_convolution_2d import ww_binary_convolution_2d
 
 def harmonic_seq(n):
     return [1./i for i in range(1,n+1)]
 
-class SSBinaryConvolution2D(link.Link):
+class WWBinaryConvolution2D(link.Link):
     def __init__(self, in_channels, out_channels, ksize=None, stride=1, pad=0,
                  nobias=False, initialW=None, initial_bias=None, **kwargs):
-        super(SSBinaryConvolution2D, self).__init__()
+        super(WWBinaryConvolution2D, self).__init__()
 
         argument.check_unexpected_kwargs(
             kwargs, deterministic="deterministic argument is not "

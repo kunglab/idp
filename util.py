@@ -88,11 +88,7 @@ def train_model(model, train, test, args, out=None):
                                                 repeat=False, shuffle=False)
     updater = training.StandardUpdater(train_iter, opt, device=args.gpu)
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=out)
-    # trainer.extend(extensions.ExponentialShift('lr', 0.05), trigger=(5, 'epoch'))
-    # trainer.extend(TrainingModeSwitcher(model))
-    def eval_hook(e):
-        model.train = False
-    trainer.extend(extensions.Evaluator(test_iter, model, device=args.gpu, eval_hook=eval_hook))
+    trainer.extend(extensions.Evaluator(test_iter, model, device=args.gpu))
     trainer.extend(extensions.LogReport())
     trainer.extend(extensions.PrintReport(
         ['epoch', 'main/loss', 'validation/main/loss'] +

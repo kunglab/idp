@@ -62,7 +62,7 @@ parser.add_argument('--out', '-o', default='result',
 args = parser.parse_args()
 train, test = get_mnist(ndim=3)
 # ms = [0.5, 1, 2, 3, 4]
-ms = [1]
+ms = [2]
 acc_dict = {}
 for m in ms:
     key = str(m)

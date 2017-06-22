@@ -61,32 +61,46 @@ parser.add_argument('--out', '-o', default='result',
                     help='Directory to output the result')
 args = parser.parse_args()
 train, test = get_mnist(ndim=3)
-# ms = [0.5, 1, 2, 3, 4]
+ms = [0, 1, 2, 3]
 
 import chainer
 
-model = net.ApproxNetWW(10)
-chainer.config.train = True
-util.train_model(model, train, test, args)
-chainer.config.train = False
-ratios = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
-acc_dict = {}
-key = "WW"
-accs = [util.get_approx_acc(model, test, ratio=r) for r in ratios]
-acc_dict[key] = accs
-    
-visualize.approx_acc(acc_dict, ratios, prefix="ww")
-
-model = net.ApproxNetSS(10)
-chainer.config.train = True
-util.train_model(model, train, test, args)
-chainer.config.train = False
 #acc_dict = {}
-key = "SS"
-accs = [util.get_approx_acc(model, test, ratio=r) for r in ratios]
-acc_dict[key] = accs
+#for m in ms:
+#    model = net.ApproxNetWW(10,m)
+#    chainer.config.train = True
+#    util.train_model(model, train, test, args)
+#    chainer.config.train = False
+#    ratios = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
+#    key = "WW_m{}".format(m)
+#    accs = [util.get_approx_acc(model, test, ratio=r) for r in ratios]
+#    acc_dict[key] = accs
+#    
+#visualize.approx_acc(acc_dict, ratios, prefix="WW_")
+
+acc_dict = {}
+for m in ms:
+    model = net.ApproxNetSS(10,m)
+    chainer.config.train = True
+    util.train_model(model, train, test, args)
+    chainer.config.train = False
+    ratios = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
+    key = "SS_m{}".format(m)
+    accs = [util.get_approx_acc(model, test, ratio=r) for r in ratios]
+    acc_dict[key] = accs
     
-visualize.approx_acc(acc_dict, ratios, prefix="ss")
+visualize.approx_acc(acc_dict, ratios, prefix="SS_")
+
+# model = net.ApproxNetSS(10)
+# chainer.config.train = True
+# util.train_model(model, train, test, args)
+# chainer.config.train = False
+# #acc_dict = {}
+# key = "SS"
+# accs = [util.get_approx_acc(model, test, ratio=r) for r in ratios]
+# acc_dict[key] = accs
+#     
+# visualize.approx_acc(acc_dict, ratios, prefix="ss")
 
 assert False
 

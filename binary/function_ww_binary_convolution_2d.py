@@ -73,7 +73,6 @@ class WWBinaryConvolution2DFunction(function.Function):
         
         weight = numpy.copy(self.weight)
         weight[int(self.ratio*numpy.prod(Wb.shape)):] = 0.
-        
         M = numpy.asarray(weight,numpy.float32).reshape(Wb.shape)
         self.M = M
         Wb = self.M*Wb
@@ -96,6 +95,7 @@ class WWBinaryConvolution2DFunction(function.Function):
         
         weight = numpy.copy(self.weight)
         weight[int(self.ratio*numpy.prod(Wb.shape)):] = 0.
+        # print(weight.sum())
         
         M = cuda.cupy.asarray(weight,numpy.float32).reshape(Wb.shape)
         self.M = M

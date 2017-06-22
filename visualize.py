@@ -17,7 +17,7 @@ def add_colorbar(im, aspect=20, pad_fraction=0.5, **kwargs):
     plt.sca(current_ax)
     return im.axes.figure.colorbar(im, cax=cax, **kwargs)
 
-def approx_acc(acc_dict, ratios, folder='figures/', ext='.png'):
+def approx_acc(acc_dict, ratios, folder='figures/', ext='.png', prefix=""):
     #pathlib.Path(folder).mkdir(parents=True, exist_ok=True) 
     keys = list(acc_dict.keys())
     keys.sort(key=float)
@@ -28,7 +28,7 @@ def approx_acc(acc_dict, ratios, folder='figures/', ext='.png'):
         plt.legend(loc=0)
         plt.tight_layout()
         plt.grid()
-        plt.savefig("{}acc{}".format(folder, ext), dpi=300)
+        plt.savefig("{}{}acc{}".format(folder, prefix, ext), dpi=300)
 
 def conv_approx(hs, ratios, save_name, folder='figures/slices/', ext='.png'):
     vmax = np.max([np.max(h) for h in hs])

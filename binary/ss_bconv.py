@@ -58,7 +58,7 @@ class SSBinaryConvolution2D(link.Link):
     def __call__(self, x, ratio=1):
         if self.W.data is None:
             self._initialize_params(x.shape[1])
-        return ss_binary_convolution_2d(self.weight, 
+        return ss_binary_convolution_2d(
             x, self.W, self.b, self.stride, self.pad, ratio=ratio)
 
 

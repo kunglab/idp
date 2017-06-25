@@ -21,7 +21,7 @@ from binary.function_binary_convolution_2d import binary_convolution_2d
 from binary.bst import bst, mbst, mbst_bp
 
 def ordered_do(x, ratio):
-    shape = x.shapej
+    shape = x.shape
     l = int(np.prod(shape))
     n_zeros = int(l * ratio)
     n_ones = l - n_zeros
@@ -36,11 +36,27 @@ def random_do(x, ratio):
     mask = mask.reshape(x.shape)
     return mask
 
+def equal_do(x, ratio):
+    x = x.data
+    shape = x.shape
+    x = x.flatten()
+    one_pos = cupy.where(x > 0)
+    one_pos = one_pos[:int(ratio*len(one_pos))]
+    none_pos = cupy.where(x < 0)
+    none_pos = none_pos[:int(ratio*len(none_pos))]
+    mask = cupy.zeros(x.shape)
+    mask[one_pos] = 1
+    mask[none_pos] = 1
+    mask = mask.reshape(shape)
+    return mask
+
 def sample_filter(f, ratio=0.5, do_type='ordered'):
     if do_type == 'ordered':
         mask = ordered_do(f, ratio)
     elif do_type == 'random':
         mask = random_do(f, ratio)
+    elif do_type == 'equal':
+        mask = equal_do(f, ratio)
     else:
         raise NotImplementedError()
 
@@ -54,6 +70,8 @@ def conv_do(layer, x, ratio=0.5, do_type='random'):
             mask[wi] = ordered_do(layer.W[0], ratio)
         elif do_type == 'random':
             mask[wi] = random_do(layer.W[0], ratio)
+        elif do_type == 'equal':
+            mask[wi] = equal_do(layer.W[0], ratio)
         else:
             raise NotImplementedError()
 
@@ -67,20 +85,20 @@ class ApproxNet(chainer.Chain):
         self.n_out = n_out
         self.m = m
         with self.init_scope():
-            self.l1 = SSBinaryConvolution2D(32, 3, pad=1)
+            self.l1 = BinaryConvolution2D(32, 3, pad=1)
             self.bn1 = L.BatchNormalization(32)
-            self.l2 = SSBinaryConvolution2D(64, 3, pad=1)
+            self.l2 = BinaryConvolution2D(64, 3, pad=1)
             self.bn2 = L.BatchNormalization(64)
             self.l3 = BinaryLinear(n_out)
 
     def __call__(self, x, t, ret_param='loss'):
         if chainer.config.train:
-            h = mbst_bp(self.bn1(self.l1(x, ratio=0.5)), self.m)
-            h = mbst_bp(self.bn2(self.l2(h, ratio=0.5)), self.m)
+            h = mbst_bp(self.bn1(self.l1(x)), self.m)
+            h = mbst_bp(self.bn2(self.l2(h)), self.m)
             h = self.l3(h)
         else:
-            h = mbst_bp(self.bn1(self.l1(x, ratio=0.5)), self.m)
-            h = mbst_bp(self.bn2(self.l2(h, ratio=0.5)), self.m)
+            h = mbst_bp(self.bn1(self.l1(x)), self.m)
+            h = mbst_bp(self.bn2(self.l2(h)), self.m)
             h = self.l3(h)
 
         report = {
@@ -97,6 +115,12 @@ class ApproxNet(chainer.Chain):
         h = mbst_bp(self.bn2(h), self.m)
         h = self.l3(h)
         return F.accuracy(h, t)
+
+    def approx_features(self, x, ratio, do_type):
+        h = mbst_bp(self.bn1(self.l1(x)), self.m)
+        h = conv_do(self.l2, h, ratio=ratio, do_type=do_type)
+        h = mbst_bp(self.bn2(h), self.m)
+        return h
 
     def layer(self, x, layer=1):
         h = bst(self.bn1(self.l1(x)))
@@ -148,6 +172,12 @@ class ApproxNetSS(chainer.Chain):
         h = mbst_bp(self.bn2(self.l2(h, ratio=ratio)), self.m)
         h = self.l3(h)
         return F.accuracy(h, t)
+
+    def approx_features(self, x, ratio, do_type):
+        h = mbst_bp(self.bn1(self.l1(x, ratio=ratio)), self.m)
+        h = conv_do(self.l2, h, ratio=ratio, do_type=do_type)
+        h = mbst_bp(self.bn2(h), self.m)
+        return h
 
     def layer(self, x, layer=1):
         h = bst(self.bn1(self.l1(x)))

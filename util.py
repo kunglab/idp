@@ -53,6 +53,15 @@ def get_approx_acc(model, dataset_tuple, ratio, do_type=None, batchsize=1024, gp
         accs += acc*len(x_batch)
     return (accs / len(x)) * 100.
 
+def get_approx_features(model, dataset_tuple, ratio, do_type='random', batchsize=1024, gpu=0):
+    xp = np if gpu < 0 else cuda.cupy
+    x, _ = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
+    model.train = False
+    x_batch = xp.array(x[:batchsize])
+    features = model.approx_features(x_batch, ratio=ratio, do_type=do_type)
+    features.to_cpu()
+    return features.data
+
 def get_layer(model, dataset_tuple, layer, batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
     x, _ = dataset_tuple._datasets[0], dataset_tuple._datasets[1]

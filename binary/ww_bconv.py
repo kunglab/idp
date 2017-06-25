@@ -12,8 +12,10 @@ from chainer import initializer
 
 from binary.function_ww_binary_convolution_2d import ww_binary_convolution_2d
 
+from scipy.misc import factorial
+
 def harmonic_seq(n):
-    return [1./i for i in range(1,n+1)]
+    return [2./i for i in range(1,n+1)]
 
 class WWBinaryConvolution2D(link.Link):
     def __init__(self, in_channels, out_channels, ksize=None, stride=1, pad=0,

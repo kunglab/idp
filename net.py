@@ -162,6 +162,55 @@ class ApproxNetSS(chainer.Chain):
     def param_names(self):
         return  'bin'
     
+class ApproxNetSSBST(chainer.Chain):
+    def __init__(self, n_out, ratio=0.5):
+        super(ApproxNetSSBST, self).__init__()
+        self.n_out = n_out
+        self.ratio = ratio
+        with self.init_scope():
+            self.l1 = SSBinaryConvolution2D(32, 3, pad=1)
+            self.bn1 = L.BatchNormalization(32)
+            self.l2 = SSBinaryConvolution2D(64, 3, pad=1)
+            self.bn2 = L.BatchNormalization(64)
+            self.l3 = BinaryLinear(n_out)
+
+    def __call__(self, x, t, ret_param='loss'):
+        if chainer.config.train:
+            h = bst(self.bn1(self.l1(x, ratio=self.ratio)))
+            h = bst(self.bn2(self.l2(h, ratio=self.ratio)))
+            h = self.l3(h)
+        else:
+            h = bst(self.bn1(self.l1(x, ratio=self.ratio)))
+            h = bst(self.bn2(self.l2(h, ratio=self.ratio)))
+            h = self.l3(h)
+
+        report = {
+            'loss': softmax(h, t),
+            'acc': F.accuracy(h, t)
+        }
+
+        reporter.report(report, self)
+        return report[ret_param]
+
+    def approx(self, x, t, ratio, do_type):
+        h = bst(self.bn1(self.l1(x, ratio=ratio)))
+        h = bst(self.bn2(self.l2(h, ratio=ratio)))
+        h = self.l3(h)
+        return F.accuracy(h, t)
+
+    def layer(self, x, layer=1):
+        h = bst(self.bn1(self.l1(x)))
+        if layer == 1:
+            return h
+        else:
+            return bst(self.bn2(self.l2(h)))
+
+    def report_params(self):
+        return ['validation/main/acc']
+
+    def param_names(self):
+        return  'bin'
+    
 class ApproxNetWW(chainer.Chain):
     def __init__(self, n_out, m=0, ratio=1):
         super(ApproxNetWW, self).__init__()

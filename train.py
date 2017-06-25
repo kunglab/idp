@@ -3,6 +3,7 @@ import argparse
 import visualize # matplotlib is being imported somewhere else..
 
 import cupy
+import chainer
 from chainer.datasets import get_mnist, get_cifar10
 import chainer.functions as F
 import numpy as np
@@ -61,43 +62,46 @@ parser.add_argument('--out', '-o', default='result',
                     help='Directory to output the result')
 args = parser.parse_args()
 train, test = get_mnist(ndim=3)
-ms = [0, 1, 2, 3]
 
-import chainer
+# ms = [1]
+# comp_ratios = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+# acc_dict = {}
+# for m in ms:
+#     for f_ratio in [0.0, 0.5]:
+#         for c_ratio in [0.5, 1.0]:
+#             model = net.ApproxNetWW(10, m, comp_ratio=c_ratio, filter_ratio=f_ratio)
+#             util.train_model(model, train, test, args)
+#             key = "f:{}_c:{}".format(str(f_ratio), str(c_ratio))
+#             accs = []
+#             for cr in comp_ratios:
+#                 acc = util.get_approx_acc(model, test, comp_ratio=cr, filter_ratio=f_ratio)
+#                 accs.append(acc)
+#             acc_dict[key] = accs
+        
+# visualize.approx_acc(acc_dict, comp_ratios*100., prefix="WW_")
 
-#acc_dict = {}
-#for m in ms:
-#    model = net.ApproxNetWW(10,m)
-#    chainer.config.train = True
-#    util.train_model(model, train, test, args)
-#    chainer.config.train = False
-#    ratios = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
-#    key = "WW_m{}".format(m)
-#    accs = [util.get_approx_acc(model, test, ratio=r) for r in ratios]
-#    acc_dict[key] = accs
-#    
-#visualize.approx_acc(acc_dict, ratios, prefix="WW_")
-
+comp_ratios = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
 acc_dict = {}
-for m in ms:
-    model = net.ApproxNetSS(10,m,0.5)
-    chainer.config.train = True
-    util.train_model(model, train, test, args)
-    chainer.config.train = False
-    ratios = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
-    key = "TST_m{}".format(m)
-    accs = [util.get_approx_acc(model, test, ratio=r) for r in ratios]
-    acc_dict[key] = accs
-    
-model = net.ApproxNetSSBST(10,0.5)
-chainer.config.train = True
-util.train_model(model, train, test, args)
-chainer.config.train = False
-key = "BST"
-accs = [util.get_approx_acc(model, test, ratio=r) for r in ratios]
-acc_dict[key] = accs
 
-visualize.approx_acc(acc_dict, ratios, prefix="SS_TST_BST_0.5")
+# for m in ms:
+#     model = net.ApproxNetSS(10,m,0.5)
+#     chainer.config.train = True
+#     util.train_model(model, train, test, args)
+#     chainer.config.train = False
+#     ratios = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0]
+#     key = "TST_m{}".format(m)
+#     accs = [util.get_approx_acc(model, test, ratio=r) for r in ratios]
+#     acc_dict[key] = accs
+#     
+# model = net.ApproxNetSSBST(10,0.5)
+# chainer.config.train = True
+# util.train_model(model, train, test, args)
+# chainer.config.train = False
+# key = "BST"
+# accs = [util.get_approx_acc(model, test, ratio=r) for r in ratios]
+# acc_dict[key] = accs
+# 
+# visualize.approx_acc(acc_dict, ratios, prefix="SS_TST_BST_0.5")
 
 #acc_dict = {}
 #model = net.ApproxNetSSBST(10,1)
@@ -161,3 +165,19 @@ visualize.conv_approx(hs, ratios, 'learned_binary')
 # hs, ratios = compute_approx(model, test, do_type)
 # visualize.layer_01s(l1, l2)
 # visualize.approx_match(hs, ratios, do_type)
+
+acts = ['ternary', 'binary', 'relu']
+m = 1
+f_ratio = 0.5
+c_ratio = 0.5
+for act in acts:
+    model = net.ApproxNetWW(10, m=m, comp_ratio=c_ratio, filter_ratio=f_ratio, act=act)
+    util.train_model(model, train, test, args)
+    key = "{}".format(act)
+    accs = []
+    for cr in comp_ratios:
+        acc = util.get_approx_acc(model, test, comp_ratio=cr, filter_ratio=f_ratio)
+        accs.append(acc)
+    acc_dict[key] = accs
+    
+visualize.approx_acc(acc_dict, comp_ratios*100., prefix="act")

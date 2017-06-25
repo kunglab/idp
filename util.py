@@ -21,6 +21,41 @@ from chainer import cuda
 from chainer import function
 from chainer.utils import type_check
 
+class FilterDropout(function.Function):
+    def __init__(self, dropout_ratio):
+        self.dropout_ratio = dropout_ratio
+
+    def check_type_forward(self, in_types):
+        type_check.expect(in_types.size() == 1)
+        type_check.expect(in_types[0].dtype.kind == 'f')
+
+    def forward(self, x):
+        if not hasattr(self, 'mask'):
+            num_x = x[0].shape[0]
+            num_f = x[0].shape[1]
+            num_trim = int(self.dropout_ratio*num_f)
+            scale = x[0].dtype.type(1. / (1 - self.dropout_ratio))
+            xp = cuda.get_array_module(*x)
+            a = np.arange(num_f)
+            perms = np.argsort(np.random.rand(a.shape[0], num_x-1), axis=0)
+            x_idxs = np.repeat(np.arange(x[0].shape[0]), num_trim)
+            y_idxs = np.hstack((a[:, np.newaxis], a[perms])).T[:, :int(self.dropout_ratio*num_f)].flatten()
+            if xp == np:
+                flag = xp.ones(x[0].shape)
+            else:
+                flag = xp.ones(x[0].shape, dtype=np.float32)
+            flag[x_idxs, y_idxs] = 0.0
+            self.mask = scale * flag
+        return x[0] * self.mask,
+
+    def backward(self, x, gy):
+        return gy[0] * self.mask,
+
+def filter_dropout(x, ratio=.5, train=True):
+    if train:
+        return FilterDropout(ratio)(x)
+    return x
+
 def pct_alike(x, y):
     x, y = x.flatten(), y.flatten()
     return len(np.where(x == y)[0]) / float(len(x))
@@ -39,7 +74,7 @@ def get_acc(model, dataset_tuple, ret_param='acc', batchsize=1024, gpu=0):
         accs += acc*len(x_batch)
     return (accs / len(x)) * 100.
 
-def get_approx_acc(model, dataset_tuple, ratio, do_type=None, batchsize=1024, gpu=0):
+def get_approx_acc(model, dataset_tuple, comp_ratio, filter_ratio, batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     accs = 0
@@ -47,11 +82,21 @@ def get_approx_acc(model, dataset_tuple, ratio, do_type=None, batchsize=1024, gp
     for i in range(0, len(x), batchsize):
         x_batch = xp.array(x[i:i+batchsize])
         y_batch = xp.array(y[i:i+batchsize])
-        acc_data = model.approx(x_batch, y_batch, ratio=ratio, do_type=do_type)
+        acc_data = model(x_batch, y_batch, comp_ratio=comp_ratio, 
+                         filter_ratio=filter_ratio, ret_param='acc')
         acc_data.to_cpu()
         acc = acc_data.data
         accs += acc*len(x_batch)
     return (accs / len(x)) * 100.
+
+def get_approx_features(model, dataset_tuple, ratio, do_type='random', batchsize=1024, gpu=0):
+    xp = np if gpu < 0 else cuda.cupy
+    x, _ = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
+    model.train = False
+    x_batch = xp.array(x[:batchsize])
+    features = model.approx_features(x_batch, ratio=ratio, do_type=do_type)
+    features.to_cpu()
+    return features.data
 
 def get_layer(model, dataset_tuple, layer, batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
@@ -71,6 +116,7 @@ def get_class_acc(model, dataset_tuple, batchsize=128, gpu=0):
         return y_hat
 
 def train_model(model, train, test, args, out=None):
+    chainer.config.train = True
     if not out:
         out = args.out
     batchsize = args.batchsize
@@ -101,6 +147,7 @@ def train_model(model, train, test, args, out=None):
     save_model(model, os.path.join(out, name))
     with open(os.path.join(out, 'log'), 'r') as fp:
         return eval(fp.read().replace('\n', ''))
+    chainer.config.train = False
 
 def save_model(model, folder):
     if not os.path.exists(folder):

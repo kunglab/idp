@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+from functools import partial
 
 import chainer
 from chainer import reporter
@@ -81,10 +82,20 @@ def conv_do(layer, x, ratio=0.5, do_type='random'):
     return h
 
 class ApproxNet(chainer.Chain):
-    def __init__(self, n_out, m, comp_ratio=0.5):
+    def __init__(self, n_out, m, comp_ratio=0.5, act='ternary'):
         super(ApproxNet, self).__init__()
         self.n_out = n_out
         self.m = m
+
+        if act == 'ternary':
+            self.act = partial(mbst_bp, m=self.m)
+        elif act == 'binary':
+            self.act = bst
+        elif act == 'relu':
+            self.act = F.relu
+        else:
+            raise NameError("act={}".format(act))
+
         with self.init_scope():
             self.l1 = BinaryConvolution2D(32, 3, pad=1)
             self.bn1 = L.BatchNormalization(32)
@@ -94,8 +105,8 @@ class ApproxNet(chainer.Chain):
 
     def __call__(self, x, t, ret_param='loss'):
         if chainer.config.train:
-            h = mbst_bp(self.bn1(self.l1(x)), self.m)
-            h = mbst_bp(self.bn2(self.l2(h)), self.m)
+            h = self.act(self.bn1(self.l1(x)), self.m)
+            h = self.act(self.bn2(self.l2(h)), self.m)
             h = self.l3(h)
         else:
             h = mbst_bp(self.bn1(self.l1(x)), self.m)
@@ -194,17 +205,27 @@ class ApproxNetSS(chainer.Chain):
         return  'bin'
     
 class ApproxNetWW(chainer.Chain):
-    def __init__(self, n_out, m=0, comp_ratio=1, filter_ratio=0):
+    def __init__(self, n_out, m=0, comp_ratio=1, filter_ratio=0, act='ternary'):
         super(ApproxNetWW, self).__init__()
         self.n_out = n_out
         self.comp_ratio = comp_ratio
         self.filter_ratio = filter_ratio
         self.m = m
+
+        if act == 'ternary':
+            self.act = partial(mbst_bp, m=self.m)
+        elif act == 'binary':
+            self.act = bst
+        elif act == 'relu':
+            self.act = F.relu
+        else:
+            raise NameError("act={}".format(act))
+
         with self.init_scope():
-            self.l1 = WWBinaryConvolution2D(16, 3, pad=1)
-            self.bn1 = L.BatchNormalization(16)
-            self.l2 = WWBinaryConvolution2D(32, 3, pad=1)
-            self.bn2 = L.BatchNormalization(32)
+            self.l1 = WWBinaryConvolution2D(32, 3, pad=1)
+            self.bn1 = L.BatchNormalization(32)
+            self.l2 = WWBinaryConvolution2D(64, 3, pad=1)
+            self.bn2 = L.BatchNormalization(64)
             self.l3 = BinaryLinear(n_out)
 
     def __call__(self, x, t, comp_ratio=None, filter_ratio=None, ret_param='loss'):
@@ -213,9 +234,9 @@ class ApproxNetWW(chainer.Chain):
         if not filter_ratio:
             filter_ratio = self.filter_ratio
         
-        h = mbst_bp(self.bn1(self.l1(x, ratio=comp_ratio)), self.m)
-        h = util.filter_dropout(h, ratio=filter_ratio, train=False)
-        h = mbst_bp(self.bn2(self.l2(h, ratio=comp_ratio)), self.m)
+        h = self.act(self.bn1(self.l1(x, ratio=comp_ratio)))
+        h = util.filter_dropout(h, ratio=filter_ratio)
+        h = self.act(self.bn2(self.l2(h, ratio=comp_ratio)))
         h = self.l3(h)
 
         report = {

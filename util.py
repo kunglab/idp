@@ -79,7 +79,6 @@ def get_approx_acc(model, dataset_tuple, comp_ratio, filter_ratio, batchsize=102
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     accs = 0
     model.train = False
-    print(comp_ratio, filter_ratio)
     for i in range(0, len(x), batchsize):
         x_batch = xp.array(x[i:i+batchsize])
         y_batch = xp.array(y[i:i+batchsize])

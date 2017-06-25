@@ -63,16 +63,37 @@ parser.add_argument('--out', '-o', default='result',
 args = parser.parse_args()
 train, test = get_mnist(ndim=3)
 
-ms = [1]
-comp_ratios = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
+# ms = [1]
+# comp_ratios = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+# acc_dict = {}
+# for m in ms:
+#     for f_ratio in [0.0, 0.5]:
+#         for c_ratio in [0.5, 1.0]:
+#             model = net.ApproxNetWW(10, m, comp_ratio=c_ratio, filter_ratio=f_ratio)
+#             util.train_model(model, train, test, args)
+#             key = "f:{}_c:{}".format(str(f_ratio), str(c_ratio))
+#             accs = []
+#             for cr in comp_ratios:
+#                 acc = util.get_approx_acc(model, test, comp_ratio=cr, filter_ratio=f_ratio)
+#                 accs.append(acc)
+#             acc_dict[key] = accs
+        
+# visualize.approx_acc(acc_dict, comp_ratios*100., prefix="WW_")
+
+comp_ratios = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
 acc_dict = {}
-for m in ms:
-    model = net.ApproxNetWW(10, m, comp_ratio=0.5, filter_ratio=0.0)
+acts = ['ternary', 'binary', 'relu']
+m = 1
+f_ratio = 0.5
+c_ratio = 0.5
+for act in acts:
+    model = net.ApproxNetWW(10, m=m, comp_ratio=c_ratio, filter_ratio=f_ratio, act=act)
     util.train_model(model, train, test, args)
-    key = "WW_m{}".format(m)
+    key = "{}".format(act)
     accs = []
     for cr in comp_ratios:
-        accs.append(util.get_approx_acc(model, test, comp_ratio=cr, filter_ratio=0.0))
+        acc = util.get_approx_acc(model, test, comp_ratio=cr, filter_ratio=f_ratio)
+        accs.append(acc)
     acc_dict[key] = accs
     
-visualize.approx_acc(acc_dict, comp_ratios*100., prefix="WW_")
+visualize.approx_acc(acc_dict, comp_ratios*100., prefix="act")

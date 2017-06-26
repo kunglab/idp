@@ -56,6 +56,28 @@ def filter_dropout(x, ratio=.5, train=True):
         return FilterDropout(ratio)(x)
     return x
 
+def gen_prob(dist):
+    if dist == 'exp':
+        return exp_prob()
+    if dist == 'linear':
+        return linear_prob()
+    if dist == 'id':
+        return 0
+    else:
+        raise NameError('dist: {}'.format(dist))
+
+def exp_prob(w=0.16666):
+    while True:
+        do = np.random.exponential(w)
+        if do <= 1.0:
+            break
+    return do
+
+def linear_prob(w=1):
+    w += 1
+    weights = np.linspace(0, 1, w)/np.sum(np.linspace(0, 1, w))
+    return 1 - np.random.choice(range(w), p=weights)/float(w)
+
 def pct_alike(x, y):
     x, y = x.flatten(), y.flatten()
     return len(np.where(x == y)[0]) / float(len(x))

@@ -254,11 +254,11 @@ class ApproxNetSSBST(chainer.Chain):
         return  'bin'
     
 class ApproxNetWW(chainer.Chain):
-    def __init__(self, n_out, m=0, comp_ratio=1, filter_ratio=0, act='ternary'):
+    def __init__(self, n_out, m=0, comp_f='exp', filter_f='exp', act='ternary'):
         super(ApproxNetWW, self).__init__()
         self.n_out = n_out
-        self.comp_ratio = comp_ratio
-        self.filter_ratio = filter_ratio
+        self.comp_f = comp_f
+        self.filter_f = filter_f
         self.m = m
 
         if act == 'ternary':
@@ -271,22 +271,24 @@ class ApproxNetWW(chainer.Chain):
             raise NameError("act={}".format(act))
 
         with self.init_scope():
-            self.l1 = WWBinaryConvolution2D(32, 3, pad=1)
-            self.bn1 = L.BatchNormalization(32)
-            self.l2 = WWBinaryConvolution2D(64, 3, pad=1)
-            self.bn2 = L.BatchNormalization(64)
-            self.l3 = BinaryLinear(n_out)
+            self.l1 = WWBinaryConvolution2D(128, 3, pad=1)
+            self.bn1 = L.BatchNormalization(128)
+            self.l2 = WWBinaryConvolution2D(256, 3, pad=1)
+            self.bn2 = L.BatchNormalization(256)
+            self.l4 = BinaryLinear(n_out)
 
     def __call__(self, x, t, comp_ratio=None, filter_ratio=None, ret_param='loss'):
         if not comp_ratio:
-            comp_ratio = self.comp_ratio
+            comp_ratio = 1-util.gen_prob(self.comp_f)
         if not filter_ratio:
-            filter_ratio = self.filter_ratio
-        
+            filter_ratio = util.gen_prob(self.filter_f)
+
         h = self.act(self.bn1(self.l1(x, ratio=comp_ratio)))
         h = util.filter_dropout(h, ratio=filter_ratio)
-        h = self.act(self.bn2(self.l2(h, ratio=comp_ratio)))
-        h = self.l3(h)
+        h = F.max_pooling_2d(h, 2)
+        h = self.act(self.bn2(self.l2(x, ratio=comp_ratio)))
+        h = util.filter_dropout(h, ratio=filter_ratio)
+        h = self.l4(h)
 
         report = {
             'loss': softmax(h, t),

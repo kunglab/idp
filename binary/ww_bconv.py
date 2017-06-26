@@ -23,6 +23,11 @@ def harmonic_seq_group(W_shape):
     n = out_channels
     return numpy.asarray([[2./i]*in_channels*kh*kw for i in range(1,n+1)]).flatten()
 
+def harmonic_seq_group_inout(W_shape):
+    out_channels, in_channels, kh, kw = W_shape
+    n = out_channels*in_channels
+    return numpy.asarray([[2./i]*kh*kw for i in range(1,n+1)]).flatten()
+
 def harmonic_seq_group_half_one(W_shape):
     n = numpy.prod(W_shape)
     out_channels, in_channels, kh, kw = W_shape
@@ -31,6 +36,7 @@ def harmonic_seq_group_half_one(W_shape):
     first = list(numpy.asarray([[1]*in_channels*kh*kw for i in range(1,half+1)]).flatten())
     second = list(numpy.asarray([[2./i]*in_channels*kh*kw for i in range(1,rest+1)]).flatten())
     return first + second
+
 
 class WWBinaryConvolution2D(link.Link):
     def __init__(self, in_channels, out_channels, ksize=None, stride=1, pad=0,
@@ -75,6 +81,8 @@ class WWBinaryConvolution2D(link.Link):
             self.weight = harmonic_seq(W_shape)
         elif self.mode == 'harmonic_seq_group':
             self.weight = harmonic_seq_group(W_shape)
+        elif self.mode == 'harmonic_seq_group_inout':
+            self.weight = harmonic_seq_group_inout(W_shape)
         elif self.mode == 'harmonic_seq_group_half_one':
             self.weight = harmonic_seq_group_half_one(W_shape)
         

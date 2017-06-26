@@ -254,11 +254,13 @@ class ApproxNetSSBST(chainer.Chain):
         return  'bin'
     
 class ApproxNetWW(chainer.Chain):
-    def __init__(self, n_out, m=0, comp_f='exp', filter_f='exp', act='ternary'):
+    def __init__(self, n_out, m=0, comp_f='exp', filter_f='exp', act='ternary',
+                 comp_mode='harmonic_seq_group'):
         super(ApproxNetWW, self).__init__()
         self.n_out = n_out
         self.comp_f = comp_f
         self.filter_f = filter_f
+        self.comp_mode = comp_mode
         self.m = m
 
         if act == 'ternary':
@@ -271,9 +273,9 @@ class ApproxNetWW(chainer.Chain):
             raise NameError("act={}".format(act))
 
         with self.init_scope():
-            self.l1 = WWBinaryConvolution2D(128, 3, pad=1)
+            self.l1 = WWBinaryConvolution2D(128, 3, pad=1, mode=self.comp_mode)
             self.bn1 = L.BatchNormalization(128)
-            self.l2 = WWBinaryConvolution2D(256, 3, pad=1)
+            self.l2 = WWBinaryConvolution2D(256, 3, pad=1, mode=self.comp_mode)
             self.bn2 = L.BatchNormalization(256)
             self.l4 = BinaryLinear(n_out)
 

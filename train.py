@@ -21,20 +21,25 @@ parser.add_argument('--batchsize', '-b', type=int, default=128,
                     help='learning minibatch size')
 parser.add_argument('--out', '-o', default='result',
                     help='Directory to output the result')
+parser.add_argument('--mode', '-m', default='harmonic_seq_group')
+parser.add_argument('--comp_f', default='exp')
+parser.add_argument('--filter_f', default='exp')
+
 args = parser.parse_args()
 train, test = get_mnist(ndim=3)
 
 comp_ratios = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
 acc_dict = {}
 
-acts = ['ternary', 'binary', 'relu']
+act = 'ternary'
 m = 1
 filter_f = 'exp'
 comp_f = 'exp'
-for act in acts:
-    model = net.ApproxNetWW(10, m=m, comp_f=comp_f, filter_f=filter_f, act=act)
+comp_modes = ['harmonic_seq', 'harmonic_seq_group', 'harmonic_seq_group_half_one']
+for comp_mode in comp_modes:
+    model = net.ApproxNetWW(10, m=m, comp_f=comp_f, filter_f=filter_f, act=act, comp_mode=comp_mode)
     util.train_model(model, train, test, args)
-    key = "{}".format(act)
+    key = "{}".format(comp_mode)
     accs = []
     for cr in comp_ratios:
         acc = util.get_approx_acc(model, test, comp_ratio=cr, filter_ratio=0.5)

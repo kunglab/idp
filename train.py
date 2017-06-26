@@ -60,6 +60,9 @@ parser.add_argument('--batchsize', '-b', type=int, default=128,
                     help='learning minibatch size')
 parser.add_argument('--out', '-o', default='result',
                     help='Directory to output the result')
+parser.add_argument('--mode', '-m', default='harmonic_seq_group',
+                    help='Directory to output the result')
+
 args = parser.parse_args()
 train, test = get_mnist(ndim=3)
 
@@ -71,7 +74,7 @@ m = 1
 f_ratio = 0.5
 c_ratio = 0.5
 for act in acts:
-    model = net.ApproxNetWW(10, m=m, comp_ratio=c_ratio, filter_ratio=f_ratio, act=act)
+    model = net.ApproxNetWW(10, m=m, comp_ratio=c_ratio, comp_mode=args.mode, filter_ratio=f_ratio, act=act)
     util.train_model(model, train, test, args)
     key = "{}".format(act)
     accs = []

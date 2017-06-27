@@ -19,6 +19,7 @@ def harmonic_seq(W_shape):
     return [2./i for i in range(1,n+1)]
 
 def harmonic_seq_half_one(W_shape):
+    n = numpy.prod(W_shape)
     half = n//2
     rest = n - half
     first = list(numpy.asarray([1 for i in range(1,half+1)]).flatten())

@@ -252,6 +252,28 @@ class ApproxNetSSBST(chainer.Chain):
 
     def param_names(self):
         return  'bin'
+
+class BinaryBlock(chainer.Chain):
+    def __init__(self, num_fs, ksize=3, pksize=2):
+        super(BinaryBlock, self).__init__()
+        self.pksize = pksize
+
+        if isinstance(num_fs, (int),):
+            l1_f = l2_f = num_fs
+        else:
+            l1_f, l2_f = num_fs[0], num_fs[1]
+
+        with self.init_scope():
+            self.l1 = BinaryConvolution2D(l1_f, ksize, pad=1)
+            self.bn1 = L.BatchNormalization(l1_f)
+            self.l2 = BinaryConvolution2D(l2_f, ksize, pad=1)
+            self.bn2 = L.BatchNormalization(l2_f)
+
+    def __call__(self, x):
+        h = F.relu(self.bn1(self.l1(x)))
+        h = F.max_pooling_2d(h, self.pksize, stride=1)
+        h = F.relu(self.bn2(self.l2(h)))
+        return h
     
 class ApproxBlock(chainer.Chain):
     def __init__(self, num_fs, ksize=3, pksize=2, m=1, comp_f='exp',
@@ -310,16 +332,17 @@ class ApproxNetWW(chainer.Chain):
         self.comp_mode = comp_mode
 
         with self.init_scope():
-            self.l1 = ApproxBlock(256, m=m, comp_f=comp_f, filter_f=filter_f,
+            self.l1 = ApproxBlock(16, m=m, comp_f=comp_f, filter_f=filter_f,
                                   act=act, comp_mode=comp_mode)
-            # self.l2 = ApproxBlock(64, m=m, comp_f=comp_f, filter_f=filter_f,
-            #                       act=act, comp_mode=comp_mode)
-            self.l3 = BinaryLinear(n_out)
+            self.l2 = BinaryBlock(64)
+            self.l3 = BinaryBlock(128)
+            self.l4 = BinaryLinear(n_out)
 
     def __call__(self, x, t, comp_ratio=None, filter_ratio=None, ret_param='loss'):
         h = self.l1(x, comp_ratio, filter_ratio)
-        # h = self.l2(h, comp_ratio, filter_ratio)
+        h = self.l2(h)
         h = self.l3(h)
+        h = self.l4(h)
 
         report = {
             'loss': softmax(h, t),
@@ -333,4 +356,36 @@ class ApproxNetWW(chainer.Chain):
         return ['validation/main/acc']
 
     def param_names(self):
-        return 'bin'
+        return 'approx'
+
+
+class BinaryNet(chainer.Chain):
+    def __init__(self, n_out):
+        super(BinaryNet, self).__init__()
+
+        with self.init_scope():
+            self.l1 = ApproxBlock(4, m=1, comp_f='id', filter_f='id',
+                                  act='ternary', comp_mode='harmonic_seq')
+            self.l2 = BinaryBlock(64)
+            self.l3 = BinaryBlock(128)
+            self.l4 = BinaryLinear(n_out)
+
+    def __call__(self, x, t, comp_ratio=None, filter_ratio=None, ret_param='loss'):
+        h = self.l1(x, comp_ratio, filter_ratio)
+        h = self.l2(h)
+        h = self.l3(h)
+        h = self.l4(h)
+
+        report = {
+            'loss': softmax(h, t),
+            'acc': F.accuracy(h, t)
+        }
+
+        reporter.report(report, self)
+        return report[ret_param]
+
+    def report_params(self):
+        return ['validation/main/acc']
+
+    def param_names(self):
+        return 'standard'

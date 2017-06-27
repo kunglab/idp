@@ -35,8 +35,7 @@ act = 'ternary'
 m = 1
 filter_f = 'exp'
 comp_f = 'exp'
-# comp_modes = ['harmonic_seq', 'harmonic_seq_group', 'harmonic_seq_group_half_one']
-comp_modes = ['harmonic_seq']
+comp_modes = ['harmonic_seq', 'harmonic_seq_group', 'harmonic_seq_group_inout', 'harmonic_seq_group_half_one', 'harmonic_seq_group_half_one_inout']
 for comp_mode in comp_modes:
     model = net.ApproxNetWW(10, m=m, comp_f=comp_f, filter_f=filter_f, act=act, comp_mode=comp_mode)
     util.train_model(model, train, test, args)

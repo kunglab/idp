@@ -323,7 +323,7 @@ class ApproxBlock(chainer.Chain):
 
     
 class ApproxNetWW(chainer.Chain):
-    def __init__(self, n_out, m=0, comp_f='exp', filter_f='exp', act='ternary',
+    def __init__(self, n_out, l1_f, m=0, comp_f='exp', filter_f='exp', act='ternary',
                  comp_mode='harmonic_seq_group'):
         super(ApproxNetWW, self).__init__()
         self.n_out = n_out
@@ -332,7 +332,7 @@ class ApproxNetWW(chainer.Chain):
         self.comp_mode = comp_mode
 
         with self.init_scope():
-            self.l1 = ApproxBlock(16, m=m, comp_f=comp_f, filter_f=filter_f,
+            self.l1 = ApproxBlock(l1_f, m=m, comp_f=comp_f, filter_f=filter_f,
                                   act=act, comp_mode=comp_mode)
             self.l2 = BinaryBlock(64)
             self.l3 = BinaryBlock(128)
@@ -360,11 +360,11 @@ class ApproxNetWW(chainer.Chain):
 
 
 class BinaryNet(chainer.Chain):
-    def __init__(self, n_out):
+    def __init__(self, n_out, l1_f):
         super(BinaryNet, self).__init__()
 
         with self.init_scope():
-            self.l1 = ApproxBlock(4, m=1, comp_f='id', filter_f='id',
+            self.l1 = ApproxBlock(l1_f, m=1, comp_f='id', filter_f='id',
                                   act='ternary', comp_mode='harmonic_seq')
             self.l2 = BinaryBlock(64)
             self.l3 = BinaryBlock(128)

@@ -18,6 +18,7 @@ from binary.bconv import BinaryConvolution2D
 from binary.m_bconv import MBinaryConvolution2D
 from binary.ss_bconv import SSBinaryConvolution2D
 from binary.ww_bconv import WWBinaryConvolution2D
+from binary.ww_bconv_v2 import WWBinaryConvolution2DV2
 from binary.function_binary_convolution_2d import binary_convolution_2d
 from binary.bst import bst, mbst, mbst_bp
 import util

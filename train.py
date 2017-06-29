@@ -26,24 +26,33 @@ parser.add_argument('--comp_f', default='exp')
 parser.add_argument('--filter_f', default='exp')
 
 args = parser.parse_args()
-train, test = get_mnist(ndim=3)
+train, test = get_cifar10(ndim=3)
 
 comp_ratios = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
 acc_dict = {}
+ratios_dict = {}
 
-act = 'ternary'
-m = 1
-filter_f = 'exp'
-comp_f = 'exp'
-comp_modes = ['harmonic_seq', 'harmonic_seq_group', 'harmonic_seq_group_inout', 'harmonic_seq_group_half_one', 'harmonic_seq_group_half_one_inout']
-for comp_mode in comp_modes:
-    model = net.ApproxNetWW(10, m=m, comp_f=comp_f, filter_f=filter_f, act=act, comp_mode=comp_mode)
+models = [
+  net.BinaryNet(10, l1_f=16),
+  net.BinaryNet(10, l1_f=24),
+  net.BinaryNet(10, l1_f=32),
+  net.ApproxNetWW(10, l1_f=32, m=1, comp_f='exp', filter_f='id', act='ternary', comp_mode='harmonic_seq'),
+]
+
+acc_dict['approx'] = []
+acc_dict['standard'] = []
+ratios_dict['approx'] = comp_ratios*100.
+ratios_dict['standard'] = [25, 50, 100]
+
+for model in models:
     util.train_model(model, train, test, args)
-    key = "{}".format(comp_mode)
-    accs = []
-    for cr in comp_ratios:
-        acc = util.get_approx_acc(model, test, comp_ratio=cr, filter_ratio=0.5)
-        accs.append(acc)
-    acc_dict[key] = accs
+    key = model.param_names()
+    if key == 'approx':
+        for cr in comp_ratios:
+            acc = util.get_approx_acc(model, test, comp_ratio=cr, filter_ratio=0.0)
+            acc_dict[key].append(acc)
+    else:
+        acc = util.get_approx_acc(model, test, comp_ratio=1.0, filter_ratio=0.0)
+        acc_dict[key].append(acc)
     
-visualize.approx_acc(acc_dict, comp_ratios*100., prefix="act")
+visualize.approx_acc(acc_dict, ratios_dict, prefix="act_cif")

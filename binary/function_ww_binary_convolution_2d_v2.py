@@ -74,11 +74,11 @@ class WWBinaryConvolution2DV2Function(function.Function):
         olen, ilen, hlen, wlen = Wb.shape
         
         weight = numpy.copy(self.weight)
-        weight[self.ratio*ilen:] = 0
-        weight = np.expand_dims(weight, 1)
-        weight = np.expand_dims(weight, 1)
-        weight = np.expand_dims(weight, 0)        
-        weight = np.broadcast(weight, Wb.shape)
+        weight[int(self.ratio*ilen):] = 0
+        weight = numpy.expand_dims(weight, 1)
+        weight = numpy.expand_dims(weight, 1)
+        weight = numpy.expand_dims(weight, 0)        
+        weight = numpy.broadcast_to(weight, Wb.shape)
         
         M = numpy.asarray(weight,numpy.float32).reshape(Wb.shape)
         self.M = M
@@ -102,11 +102,11 @@ class WWBinaryConvolution2DV2Function(function.Function):
         olen, ilen, hlen, wlen = Wb.shape
         
         weight = numpy.copy(self.weight)
-        weight[self.ratio*ilen:] = 0
-        weight = np.expand_dims(weight, 1)
-        weight = np.expand_dims(weight, 1)
-        weight = np.expand_dims(weight, 0)        
-        weight = np.broadcast(weight, Wb.shape)
+        weight[int(self.ratio*ilen):] = 0
+        weight = numpy.expand_dims(weight, 1)
+        weight = numpy.expand_dims(weight, 1)
+        weight = numpy.expand_dims(weight, 0)        
+        weight = numpy.broadcast_to(weight, Wb.shape)
         
         M = cuda.cupy.asarray(weight,numpy.float32).reshape(Wb.shape)
         self.M = M

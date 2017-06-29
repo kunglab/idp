@@ -322,6 +322,51 @@ class ApproxBlock(chainer.Chain):
 
         # return util.filter_dropout(h, ratio=filter_ratio)
 
+class ApproxBlockV2(chainer.Chain):
+    def __init__(self, num_fs, ksize=3, pksize=2, m=1, comp_f='exp',
+                 filter_f='exp', act='ternary', 
+                 comp_mode='harmonic_seq_group'):
+        super(ApproxBlockV2, self).__init__()
+        self.comp_f = comp_f
+        self.filter_f = filter_f
+        self.comp_mode = comp_mode
+        self.m = m
+        self.pksize = pksize
+
+        if isinstance(num_fs, (int),):
+            l1_f = l2_f = num_fs
+        else:
+            l1_f, l2_f = num_fs[0], num_fs[1]
+
+        if act == 'ternary':
+            self.act = partial(mbst_bp, m=self.m)
+        elif act == 'binary':
+            self.act = bst
+        elif act == 'relu':
+            self.act = F.relu
+        else:
+            raise NameError("act={}".format(act))
+   
+        with self.init_scope():
+            self.l1 = WWBinaryConvolution2DV2(l1_f, ksize, pad=1, mode=self.comp_mode)
+            self.bn1 = L.BatchNormalization(l1_f)
+            self.l2 = WWBinaryConvolution2DV2(l2_f, ksize, pad=1, mode=self.comp_mode)
+            self.bn2 = L.BatchNormalization(l2_f)
+
+    def __call__(self, x, comp_ratio=None, filter_ratio=None, ret_param='loss'):
+        if not comp_ratio:
+            comp_ratio = 1-util.gen_prob(self.comp_f)
+        if not filter_ratio:
+            filter_ratio = util.gen_prob(self.filter_f)
+
+        h = self.act(self.bn1(self.l1(x, ratio=comp_ratio)))
+        h = util.filter_dropout(h, ratio=filter_ratio)
+        return h
+        # h = self.l2(h, ratio=comp_ratio)
+        # h = F.max_pooling_2d(h, self.pksize, stride=1)
+        # h = self.act(self.bn2(h))
+
+        # return util.filter_dropout(h, ratio=filter_ratio)
     
 class ApproxNetWW(chainer.Chain):
     def __init__(self, n_out, l1_f, m=0, comp_f='exp', filter_f='exp', act='ternary',
@@ -334,6 +379,42 @@ class ApproxNetWW(chainer.Chain):
 
         with self.init_scope():
             self.l1 = ApproxBlock(l1_f, m=m, comp_f=comp_f, filter_f=filter_f,
+                                  act=act, comp_mode=comp_mode)
+            self.l2 = BinaryBlock(64)
+            self.l3 = BinaryBlock(128)
+            self.l4 = BinaryLinear(n_out)
+
+    def __call__(self, x, t, comp_ratio=None, filter_ratio=None, ret_param='loss'):
+        h = self.l1(x, comp_ratio, filter_ratio)
+        h = self.l2(h)
+        h = self.l3(h)
+        h = self.l4(h)
+
+        report = {
+            'loss': softmax(h, t),
+            'acc': F.accuracy(h, t)
+        }
+
+        reporter.report(report, self)
+        return report[ret_param]
+
+    def report_params(self):
+        return ['validation/main/acc']
+
+    def param_names(self):
+        return 'approx'
+    
+class ApproxNetWWV2(chainer.Chain):
+    def __init__(self, n_out, l1_f, m=0, comp_f='exp', filter_f='exp', act='ternary',
+                 comp_mode='harmonic_seq_group'):
+        super(ApproxNetWWV2, self).__init__()
+        self.n_out = n_out
+        self.comp_f = comp_f
+        self.filter_f = filter_f
+        self.comp_mode = comp_mode
+
+        with self.init_scope():
+            self.l1 = ApproxBlockV2(l1_f, m=m, comp_f=comp_f, filter_f=filter_f,
                                   act=act, comp_mode=comp_mode)
             self.l2 = BinaryBlock(64)
             self.l3 = BinaryBlock(128)

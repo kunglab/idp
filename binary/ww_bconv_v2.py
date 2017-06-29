@@ -20,7 +20,7 @@ def harmonic_seq(n):
 class WWBinaryConvolution2DV2(link.Link):
     def __init__(self, in_channels, out_channels, ksize=None, stride=1, pad=0,
                  mode='harmonic_seq', nobias=False, initialW=None, initial_bias=None, **kwargs):
-        super(WWBinaryConvolution2D, self).__init__()
+        super(WWBinaryConvolution2DV2, self).__init__()
 
         argument.check_unexpected_kwargs(
             kwargs, deterministic="deterministic argument is not "

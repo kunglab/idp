@@ -14,6 +14,7 @@ from chainer import serializers
 from chainer import training
 from chainer.training import extensions
 from chainer.serializers import load_hdf5, save_hdf5
+from chainer.datasets import get_mnist, get_cifar10
 import numpy as np
 from numpy.random import RandomState
 
@@ -69,13 +70,11 @@ def gen_prob(dist):
     else:
         raise NameError('dist: {}'.format(dist))
 
-def exp_prob(w=0.16666, bins=10):
+def exp_prob(w=0.16666):
     while True:
         do = np.random.exponential(w)
         if do <= 1.0:
             break
-    # do = round(do*bins)/bins
-    # do = min(max(1e-5, do), 0.99999)
     return do
 
 def linear_prob(w=10):
@@ -194,3 +193,10 @@ def load_or_train_model(model, train, test, args, gpu=0):
         train_model(model, train, test, args, out=args.out)
     else:
         load_model(model, os.path.join(args.out, name), gpu=gpu)
+
+def get_dataset(dataset_name):
+    if dataset_name == 'mnist':
+        return get_mnist(ndim=3)
+    if dataset_name == 'cifar10':
+        return get_cifar10(ndim=3)
+    raise NameError('{}'.format(dataset_name))

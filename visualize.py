@@ -17,14 +17,15 @@ def add_colorbar(im, aspect=20, pad_fraction=0.5, **kwargs):
     plt.sca(current_ax)
     return im.axes.figure.colorbar(im, cax=cax, **kwargs)
 
-def approx_acc(acc_dict, ratios_dict, folder='figures/', ext='.png', prefix=""):
+def approx_acc(acc_dict, ratios_dict, keys, folder='figures/', ext='.png', prefix=""):
     #pathlib.Path(folder).mkdir(parents=True, exist_ok=True) 
-    keys = list(acc_dict.keys())
     # keys.sort(key=float)
     for key in keys:
-        plt.plot(ratios_dict[key], acc_dict[key], '-o', label=key)
-    plt.ylabel("classification accuracy")
-    plt.xlabel("% components used")
+        if key in acc_dict.keys():
+            plt.plot(ratios_dict[key], acc_dict[key], '-o', label=key, ms=4)
+    plt.ylabel("Classification Accuracy")
+    plt.xlabel("Device Computation")
+    # plt.ylim((85, 100))
     plt.legend(loc=0)
     plt.tight_layout()
     plt.grid()

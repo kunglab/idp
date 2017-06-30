@@ -311,15 +311,18 @@ class ApproxBlock(chainer.Chain):
             comp_ratio = 1-util.gen_prob(self.comp_f)
         if not filter_ratio:
             filter_ratio = util.gen_prob(self.filter_f)
-
-        h = self.act(self.bn1(self.l1(x, ratio=comp_ratio)))
-        h = util.filter_dropout(h, ratio=filter_ratio)
-        return h
+        
+        h = self.l1(x, ratio=comp_ratio)
+        h = F.max_pooling_2d(h, self.pksize, stride=2)
+        h = self.act(self.bn1(h))
+        # print(h.shape)
+        # h = self.act(self.bn1(self.l1(x, ratio=comp_ratio)))
+        # h = util.filter_dropout(h, ratio=filter_ratio)
         # h = self.l2(h, ratio=comp_ratio)
-        # h = F.max_pooling_2d(h, self.pksize, stride=1)
+        # h = F.max_pooling_2d(h, self.pksize, stride=4)
         # h = self.act(self.bn2(h))
 
-        # return util.filter_dropout(h, ratio=filter_ratio)
+        return util.filter_dropout(h, ratio=filter_ratio)
 
     
 class ApproxNetWW(chainer.Chain):
@@ -335,13 +338,13 @@ class ApproxNetWW(chainer.Chain):
             self.l1 = ApproxBlock(l1_f, m=m, comp_f=comp_f, filter_f=filter_f,
                                   act=act, comp_mode=comp_mode)
             self.l2 = BinaryBlock(64)
-            self.l3 = BinaryBlock(128)
+            # self.l3 = BinaryBlock(8)
             self.l4 = BinaryLinear(n_out)
 
     def __call__(self, x, t, comp_ratio=None, filter_ratio=None, ret_param='loss'):
         h = self.l1(x, comp_ratio, filter_ratio)
         h = self.l2(h)
-        h = self.l3(h)
+        # h = self.l3(h)
         h = self.l4(h)
 
         report = {
@@ -367,13 +370,13 @@ class BinaryNet(chainer.Chain):
             self.l1 = ApproxBlock(l1_f, m=1, comp_f='id', filter_f='id',
                                   act='ternary', comp_mode='harmonic_seq')
             self.l2 = BinaryBlock(64)
-            self.l3 = BinaryBlock(128)
+            # self.l3 = BinaryBlock(8)
             self.l4 = BinaryLinear(n_out)
 
     def __call__(self, x, t, comp_ratio=None, filter_ratio=None, ret_param='loss'):
         h = self.l1(x, comp_ratio, filter_ratio)
         h = self.l2(h)
-        h = self.l3(h)
+        # h = self.l3(h)
         h = self.l4(h)
 
         report = {

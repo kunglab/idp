@@ -1,6 +1,6 @@
 import argparse
 
-import visualize # matplotlib is being imported somewhere else..
+import visualize  # matplotlib is being imported somewhere else..
 
 import cupy
 import chainer
@@ -28,31 +28,41 @@ parser.add_argument('--filter_f', default='exp')
 args = parser.parse_args()
 train, test = get_cifar10(ndim=3)
 
-comp_ratios = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+comp_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 acc_dict = {}
 ratios_dict = {}
+keys = ['standard']
 
-models = [
-  net.BinaryNet(10, l1_f=16),
-  net.BinaryNet(10, l1_f=24),
-  net.BinaryNet(10, l1_f=32),
-  net.ApproxNetWW(10, l1_f=32, m=1, comp_f='exp', filter_f='id', act='ternary', comp_mode='harmonic_seq'),
+standard_models = [
+    # net.BinaryNet(10, l1_f=2),
+    net.BinaryNet(10, l1_f=8),
+    net.BinaryNet(10, l1_f=16),
 ]
 
-acc_dict['approx'] = []
-acc_dict['standard'] = []
-ratios_dict['approx'] = comp_ratios*100.
-ratios_dict['standard'] = [25, 50, 100]
+approx_net = net.ApproxNetWW(10, l1_f=16, m=1, comp_f='exp', filter_f='id',
+                             act='ternary', comp_mode='harmonic_seq')
+util.train_model(approx_net, train, test, args)
 
-for model in models:
+#approx
+for fr in [0.0, 0.25]:
+    key = 'approx_fd:{}'.format(int((1-fr)*100.))
+    keys.append(key)
+    acc_dict[key] = []
+    ratios_dict[key] = []
+    for cr in comp_ratios:
+        acc = util.get_approx_acc(approx_net, test, comp_ratio=cr, filter_ratio=fr)
+        acc_dict[key].append(acc)
+        ratios_dict[key].append(100.*(1-fr)*cr)
+    
+# args.epoch = min(50, args.epoch)
+# standard
+acc_dict['standard'] = []
+ratios_dict['standard'] = [50, 100]
+for model in standard_models:
     util.train_model(model, train, test, args)
     key = model.param_names()
-    if key == 'approx':
-        for cr in comp_ratios:
-            acc = util.get_approx_acc(model, test, comp_ratio=cr, filter_ratio=0.0)
-            acc_dict[key].append(acc)
-    else:
-        acc = util.get_approx_acc(model, test, comp_ratio=1.0, filter_ratio=0.0)
-        acc_dict[key].append(acc)
-    
-visualize.approx_acc(acc_dict, ratios_dict, prefix="act_cif")
+    acc = util.get_approx_acc(
+        model, test, comp_ratio=1.0, filter_ratio=0.0)
+    acc_dict[key].append(acc)
+
+visualize.approx_acc(acc_dict, ratios_dict, keys, prefix="act_cif")

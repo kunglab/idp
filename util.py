@@ -58,7 +58,10 @@ def filter_dropout(x, ratio=.5, train=True):
 
 def gen_prob(dist):
     if dist == 'exp':
-        return exp_prob()
+        # return exp_prob(w=0.1666)
+        return exp_prob(w=0.1)
+    if dist == 'sexp':
+        return exp_prob(w=0.025)
     if dist == 'linear':
         return linear_prob()
     if dist == 'id':
@@ -66,14 +69,16 @@ def gen_prob(dist):
     else:
         raise NameError('dist: {}'.format(dist))
 
-def exp_prob(w=0.16666):
+def exp_prob(w=0.16666, bins=10):
     while True:
         do = np.random.exponential(w)
         if do <= 1.0:
             break
+    # do = round(do*bins)/bins
+    # do = min(max(1e-5, do), 0.99999)
     return do
 
-def linear_prob(w=1):
+def linear_prob(w=10):
     w += 1
     weights = np.linspace(0, 1, w)/np.sum(np.linspace(0, 1, w))
     return 1 - np.random.choice(range(w), p=weights)/float(w)

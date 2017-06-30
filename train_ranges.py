@@ -28,16 +28,17 @@ parser.add_argument('--dataset', '-d', default='mnist')
 
 args = parser.parse_args()
 train, test = util.get_dataset(args.dataset)
+l1_f, l2_f, l3_f = util.get_net_settings(args.dataset)
 
 comp_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 acc_dict = {}
 ratios_dict = {}
 
-names = ['approx_upper', 'approx_middle']
+names = ['approx_range', 'approx_point']
 models = [
-    net.ApproxNetWWV2(10, l1_f=16, m=1, comp_f='sexp', filter_f='id',
+    net.ApproxNetWWV2(10, l1_f, l2_f, l3_f, m=1, comp_f='mid_exp', filter_f='id',
                       act='ternary', comp_mode='harmonic_seq_group'),
-    net.ApproxNetWWV2(10, l1_f=16, m=1, comp_f='exp', filter_f='id',
+    net.ApproxNetWWV2(10, l1_f, l2_f, l3_f, m=1, comp_f='50', filter_f='id',
                       act='ternary', comp_mode='harmonic_seq_group')
 ]
 
@@ -52,4 +53,4 @@ for name, model in zip(names, models):
         ratios_dict[name].append(100. * (1 - fr) * cr)
 
 visualize.approx_acc(acc_dict, ratios_dict, names,
-                     prefix="approx_range_{}".format(args.dataset))
+                     prefix="approx_point_{}".format(args.dataset))

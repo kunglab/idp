@@ -60,9 +60,13 @@ def filter_dropout(x, ratio=.5, train=True):
 def gen_prob(dist):
     if dist == 'exp':
         # return exp_prob(w=0.1666)
-        return exp_prob(w=0.1)
+        return exp_prob(w=0.25)
     if dist == 'sexp':
         return exp_prob(w=0.025)
+    if dist == 'mid_exp':
+        return min(1.0, 0.3 + exp_prob(w=0.025))
+    if dist == '50':
+        return 0.5
     if dist == 'linear':
         return linear_prob()
     if dist == 'id':
@@ -199,4 +203,11 @@ def get_dataset(dataset_name):
         return get_mnist(ndim=3)
     if dataset_name == 'cifar10':
         return get_cifar10(ndim=3)
+    raise NameError('{}'.format(dataset_name))
+
+def get_net_settings(dataset_name):
+    if dataset_name == 'mnist':
+        return (4,4), 8, None
+    if dataset_name == 'cifar10':
+        return 16, 64, 128
     raise NameError('{}'.format(dataset_name))

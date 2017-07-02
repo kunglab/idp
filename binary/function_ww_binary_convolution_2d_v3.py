@@ -28,7 +28,7 @@ def _pair(x):
         return x
     return x, x
 
-class WWBinaryConvolution2DV2Function(function.Function):
+class WWBinaryConvolution2DV3Function(function.Function):
     def __init__(self, weight, stride=1, pad=0, ratio=0.5, use_cudnn=True):
         self.sy, self.sx = _pair(stride)
         self.ph, self.pw = _pair(pad)
@@ -108,6 +108,7 @@ class WWBinaryConvolution2DV2Function(function.Function):
         weight = numpy.expand_dims(weight, 1)
         weight = numpy.expand_dims(weight, 0)        
         weight = numpy.broadcast_to(weight, Wb.shape)
+        
         
         M = cuda.cupy.asarray(weight,numpy.float32).reshape(Wb.shape)
         self.M = M
@@ -286,8 +287,8 @@ class WWBinaryConvolution2DV2Function(function.Function):
             return gx, gW, gb
 
 
-def ww_binary_convolution_2d_v2(weight, x, W, b=None, stride=1, pad=0, ratio=0.5, use_cudnn=True):
-    func = WWBinaryConvolution2DV2Function(weight, stride, pad, ratio, use_cudnn)
+def ww_binary_convolution_2d_v3(weight, x, W, b=None, stride=1, pad=0, ratio=0.5, use_cudnn=True):
+    func = WWBinaryConvolution2DV3Function(weight, stride, pad, ratio, use_cudnn)
     if b is None:
         return func(x, W)
     else:

@@ -22,6 +22,7 @@ from chainer import cuda
 from chainer import function
 from chainer.utils import type_check
 
+
 class FilterDropout(function.Function):
     def __init__(self, dropout_ratio):
         self.dropout_ratio = dropout_ratio
@@ -34,13 +35,14 @@ class FilterDropout(function.Function):
         if not hasattr(self, 'mask'):
             num_x = x[0].shape[0]
             num_f = x[0].shape[1]
-            num_trim = int(self.dropout_ratio*num_f)
+            num_trim = int(self.dropout_ratio * num_f)
             scale = x[0].dtype.type(1. / (1 - self.dropout_ratio))
             xp = cuda.get_array_module(*x)
             a = np.arange(num_f)
-            perms = np.argsort(np.random.rand(a.shape[0], num_x-1), axis=0)
+            perms = np.argsort(np.random.rand(a.shape[0], num_x - 1), axis=0)
             x_idxs = np.repeat(np.arange(x[0].shape[0]), num_trim)
-            y_idxs = np.hstack((a[:, np.newaxis], a[perms])).T[:, :int(self.dropout_ratio*num_f)].flatten()
+            y_idxs = np.hstack((a[:, np.newaxis], a[perms])).T[:, :int(
+                self.dropout_ratio * num_f)].flatten()
             if xp == np:
                 flag = xp.ones(x[0].shape)
             else:
@@ -52,10 +54,12 @@ class FilterDropout(function.Function):
     def backward(self, x, gy):
         return gy[0] * self.mask,
 
+
 def filter_dropout(x, ratio=.5, train=True):
     if train:
         return FilterDropout(ratio)(x)
     return x
+
 
 def gen_prob(dist):
     if dist == 'exp':
@@ -77,6 +81,7 @@ def gen_prob(dist):
     else:
         raise NameError('dist: {}'.format(dist))
 
+
 def exp_prob(w=0.16666):
     while True:
         do = np.random.exponential(w)
@@ -84,14 +89,17 @@ def exp_prob(w=0.16666):
             break
     return do
 
+
 def linear_prob(w=10):
     w += 1
-    weights = np.linspace(0, 1, w)/np.sum(np.linspace(0, 1, w))
-    return 1 - np.random.choice(range(w), p=weights)/float(w)
+    weights = np.linspace(0, 1, w) / np.sum(np.linspace(0, 1, w))
+    return 1 - np.random.choice(range(w), p=weights) / float(w)
+
 
 def pct_alike(x, y):
     x, y = x.flatten(), y.flatten()
     return len(np.where(x == y)[0]) / float(len(x))
+
 
 def get_acc(model, dataset_tuple, ret_param='acc', batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
@@ -99,28 +107,30 @@ def get_acc(model, dataset_tuple, ret_param='acc', batchsize=1024, gpu=0):
     accs = 0
     model.train = False
     for i in range(0, len(x), batchsize):
-        x_batch = xp.array(x[i:i+batchsize])
-        y_batch = xp.array(y[i:i+batchsize])
+        x_batch = xp.array(x[i:i + batchsize])
+        y_batch = xp.array(y[i:i + batchsize])
         acc_data = model(x_batch, y_batch, ret_param=ret_param)
         acc_data.to_cpu()
         acc = acc_data.data
-        accs += acc*len(x_batch)
+        accs += acc * len(x_batch)
     return (accs / len(x)) * 100.
 
-def get_approx_acc(model, dataset_tuple, comp_ratio, filter_ratio, batchsize=1024, gpu=0):
+
+def get_approx_acc(model, dataset_tuple, comp_ratio, batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     accs = 0
     model.train = False
     for i in range(0, len(x), batchsize):
-        x_batch = xp.array(x[i:i+batchsize])
-        y_batch = xp.array(y[i:i+batchsize])
-        acc_data = model(x_batch, y_batch, comp_ratio=comp_ratio, 
-                         filter_ratio=filter_ratio, ret_param='acc')
+        x_batch = xp.array(x[i:i + batchsize])
+        y_batch = xp.array(y[i:i + batchsize])
+        acc_data = model(x_batch, y_batch, comp_ratio=comp_ratio,
+                         ret_param='acc')
         acc_data.to_cpu()
         acc = acc_data.data
-        accs += acc*len(x_batch)
+        accs += acc * len(x_batch)
     return (accs / len(x)) * 100.
+
 
 def get_approx_features(model, dataset_tuple, ratio, do_type='random', batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
@@ -131,22 +141,25 @@ def get_approx_features(model, dataset_tuple, ratio, do_type='random', batchsize
     features.to_cpu()
     return features.data
 
+
 def get_layer(model, dataset_tuple, layer, batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
     x, _ = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     for i in range(0, len(x), batchsize):
-        x_batch = xp.array(x[i:i+batchsize])
+        x_batch = xp.array(x[i:i + batchsize])
         return model.layer(x_batch, layer)
+
 
 def get_class_acc(model, dataset_tuple, batchsize=128, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     model.train = False
     for i in range(0, len(x), batchsize):
-        x_batch = xp.array(x[i:i+batchsize])
-        y_batch = xp.array(y[i:i+batchsize])
+        x_batch = xp.array(x[i:i + batchsize])
+        y_batch = xp.array(y[i:i + batchsize])
         y_hat = model(x_batch, y_batch, ret_param='y_hat')
         return y_hat
+
 
 def train_model(model, train, test, args, out=None):
     chainer.config.train = True
@@ -164,7 +177,7 @@ def train_model(model, train, test, args, out=None):
     opt.setup(model)
     train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
     test_iter = chainer.iterators.SerialIterator(test, args.batchsize,
-                                                repeat=False, shuffle=False)
+                                                 repeat=False, shuffle=False)
     updater = training.StandardUpdater(train_iter, opt, device=args.gpu)
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=out)
     trainer.extend(extensions.Evaluator(test_iter, model, device=args.gpu))
@@ -182,17 +195,20 @@ def train_model(model, train, test, args, out=None):
         return eval(fp.read().replace('\n', ''))
     chainer.config.train = False
 
+
 def save_model(model, folder):
     if not os.path.exists(folder):
         os.makedirs(folder)
     save_hdf5(os.path.join(folder, 'model.hdf5'), model)
     return model
 
+
 def load_model(model, folder, gpu=0):
     load_hdf5(os.path.join(folder, 'model.hdf5'), model)
     if gpu >= 0:
         model = model.to_gpu(gpu)
     return model
+
 
 def load_or_train_model(model, train, test, args, gpu=0):
     name = model.param_names()
@@ -201,6 +217,7 @@ def load_or_train_model(model, train, test, args, gpu=0):
     else:
         load_model(model, os.path.join(args.out, name), gpu=gpu)
 
+
 def get_dataset(dataset_name):
     if dataset_name == 'mnist':
         return get_mnist(ndim=3)
@@ -208,9 +225,10 @@ def get_dataset(dataset_name):
         return get_cifar10(ndim=3)
     raise NameError('{}'.format(dataset_name))
 
+
 def get_net_settings(dataset_name):
     if dataset_name == 'mnist':
-        return (16,8), 16, None
+        return (16, 8), 16, None
     if dataset_name == 'cifar10':
         return 16, 32, 64
         # return 16, 32, None

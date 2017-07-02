@@ -30,29 +30,29 @@ args = parser.parse_args()
 train, test = util.get_dataset(args.dataset)
 l1_f, l2_f, l3_f = util.get_net_settings(args.dataset)
 
-comp_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+filter_ratios = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+cr = 1.0
 acc_dict = {}
 ratios_dict = {}
 
 names = ['100', '50', '10']
 models = [
-    net.ApproxNetWWV2(10, l1_f, l2_f, l3_f, m=1, comp_f='0', filter_f='id',
+    net.ApproxNetWWV2(10, l1_f, l2_f, l3_f, m=1, filter_f='0', comp_f='id',
                       act='ternary', comp_mode='harmonic_seq_group'),
-    net.ApproxNetWWV2(10, l1_f, l2_f, l3_f, m=1, comp_f='50', filter_f='id',
+    net.ApproxNetWWV2(10, l1_f, l2_f, l3_f, m=1, filter_f='50', comp_f='id',
                       act='ternary', comp_mode='harmonic_seq_group'),
-    net.ApproxNetWWV2(10, l1_f, l2_f, l3_f, m=1, comp_f='90', filter_f='id',
+    net.ApproxNetWWV2(10, l1_f, l2_f, l3_f, m=1, filter_f='90', comp_f='id',
                       act='ternary', comp_mode='harmonic_seq_group')
 ]
 
 for name, model in zip(names, models):
-    fr = 0.0
     acc_dict[name] = []
     ratios_dict[name] = []
     util.train_model(model, train, test, args)
-    for cr in comp_ratios:
+    for fr in filter_ratios:
         acc = util.get_approx_acc(model, test, comp_ratio=cr, filter_ratio=fr)
         acc_dict[name].append(acc)
         ratios_dict[name].append(100. * (1 - fr) * cr)
 
 visualize.approx_acc(acc_dict, ratios_dict, names,
-                     prefix="approx_point_{}".format(args.dataset))
+                     prefix="approx_point_filter_{}".format(args.dataset))

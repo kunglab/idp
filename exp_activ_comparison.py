@@ -39,5 +39,5 @@ for name, model in zip(names, models):
         ratios_dict[name].append(100. * cr)
 
 filename = "activ_comparison_{}".format(args.dataset)
-visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.model_path+'/',
                xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)')

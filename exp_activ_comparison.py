@@ -16,23 +16,22 @@ args = parser.parse_args()
 
 train, test = util.get_dataset(args.dataset)
 nclass = np.bincount(test._datasets[1]).shape[0]
-small_settings = util.get_net_settings(args.dataset, size='small')
 large_settings = util.get_net_settings(args.dataset, size='large')
 comp_ratios = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 names = ['binary', r'ternary $(\epsilon=1)$']
 colors = ['#b35806', '#542788']
 models = [
+    net.ApproxNet(nclass, *large_settings, m=0, comp_f='id',
+                  act='binary', coeffs_generator=exp_seq),
     net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',
-                  act='binary', coeffs_generator=harmonic_seq),
-    net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',
-                  act='ternary', coeffs_generator=harmonic_seq),
+                  act='ternary', coeffs_generator=exp_seq),
 ]
 acc_dict = {}
 ratios_dict = {}
 for name, model in zip(names, models):
     acc_dict[name] = []
     ratios_dict[name] = []
-    util.train_model(model, train, test, args)
+    util.load_or_train_model(model, train, test, args)
     for cr in comp_ratios:
         acc = util.get_approx_acc(model, test, comp_ratio=cr)
         acc_dict[name].append(acc)
@@ -41,3 +40,8 @@ for name, model in zip(names, models):
 filename = "activ_comparison_{}".format(args.dataset)
 visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
                xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)')
+
+filename = "activ_comparison_{}_zoom".format(args.dataset)
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+               xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)',
+               ylim=(90, 100))

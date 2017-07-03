@@ -16,22 +16,22 @@ args = parser.parse_args()
 
 train, test = util.get_dataset(args.dataset)
 nclass = np.bincount(test._datasets[1]).shape[0]
-small_settings = util.get_net_settings(args.dataset)
+large_settings = util.get_net_settings(args.dataset, size='large')
 comp_ratios = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 acc_dict = {}
 ratios_dict = {}
 names = ['uniform', 'harmonic', 'linear', 'exp', 'half_one']
 colors = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00']
 models = [
-    net.ApproxNet(nclass, *small_settings, m=1, comp_f='id',
+    net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',
                   act='ternary', coeffs_generator=uniform_seq),
-    net.ApproxNet(nclass, *small_settings, m=1, comp_f='id',
+    net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',
                   act='ternary', coeffs_generator=harmonic_seq),
-    net.ApproxNet(nclass, *small_settings, m=1, comp_f='id',
+    net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',
                   act='ternary', coeffs_generator=linear_seq),
-    net.ApproxNet(nclass, *small_settings, m=1, comp_f='id',
+    net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',
                   act='ternary', coeffs_generator=exp_seq),
-    net.ApproxNet(nclass, *small_settings, m=1, comp_f='id',
+    net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',
                   act='ternary', coeffs_generator=uniform_exp_seq),
 ]
 for name, model in zip(names, models):
@@ -46,3 +46,8 @@ for name, model in zip(names, models):
 filename = "coef_comparison_{}".format(args.dataset)
 visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
                xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)')
+
+filename = "coef_comparison_{}_zoom".format(args.dataset)
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+               xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)',
+               ylim=(90,100))

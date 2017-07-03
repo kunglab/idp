@@ -23,7 +23,7 @@ names = ['incomplete-large', 'standard-small', 'standard-large']
 colors = ['#313695', '#d73027', '#a50026']
 models = [
     net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',
-                  act='ternary', coeffs_generator=uniform_exp_seq),
+                  act='ternary', coeffs_generator=exp_seq),
     net.ApproxNet(nclass, *small_settings, m=1, comp_f='id',
                   act='ternary', coeffs_generator=uniform_seq),
     net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',
@@ -34,12 +34,21 @@ ratios_dict = {}
 for name, model in zip(names, models):
     acc_dict[name] = []
     ratios_dict[name] = []
-    util.train_model(model, train, test, args)
+    util.load_or_train_model(model, train, test, args)
     for cr in comp_ratios:
         acc = util.get_approx_acc(model, test, comp_ratio=cr)
         acc_dict[name].append(acc)
-        ratios_dict[name].append(100. * cr)
+        ratios_dict[name].append(cr)
+
+    if 'small' in name:
+        ratios_dict[name] = [0.5*cr for cr in ratios_dict[name]]
 
 filename = "versus_standard_{}".format(args.dataset)
 visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
                xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)')
+
+filename = "versus_standard_{}_zoom".format(args.dataset)
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+               xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)',
+               ylim=(90,100))
+

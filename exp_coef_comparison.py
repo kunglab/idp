@@ -1,6 +1,6 @@
 import argparse
 
-import visualize  # matplotlib is being imported somewhere else..
+import visualize
 
 import cupy
 import chainer
@@ -9,7 +9,7 @@ import chainer.functions as F
 import numpy as np
 
 from binary.bst import bst
-import net_v3 as net
+import net
 import util
 from binary.ww_bconv_v3 import uniform_seq, harmonic_seq, linear_seq, exp_seq, uniform_exp_seq
 
@@ -26,26 +26,28 @@ parser.add_argument('--mode', '-m', default='harmonic_seq_group')
 parser.add_argument('--comp_f', default='exp')
 parser.add_argument('--filter_f', default='exp')
 parser.add_argument('--dataset', '-d', default='mnist')
-
 args = parser.parse_args()
-train, test = util.get_dataset(args.dataset)
-l1_f, l2_f, l3_f = util.get_net_settings(args.dataset)
-#l1_f, l2_f, l3_f = 16,16,16
 
-comp_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+train, test = util.get_dataset(args.dataset)
+nclass = np.bincount(test._datasets[1]).shape[0]
+small_settings = util.get_net_settings(args.dataset)
+comp_ratios = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 acc_dict = {}
 ratios_dict = {}
-
-names = ['100', '50', '10']
+names = ['uniform', 'harmonic', 'linear', 'exp', 'half_one']
+colors = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00']
 models = [
-    net.ApproxNet(10, l1_f, l2_f, l3_f, m=1, comp_f='0',
-                  act='ternary', coeffs_generator=uniform_exp_seq),
-    net.ApproxNet(10, l1_f, l2_f, l3_f, m=1, comp_f='50',
-                  act='ternary', coeffs_generator=uniform_exp_seq),
-    net.ApproxNet(10, l1_f, l2_f, l3_f, m=1, comp_f='90',
+    net.ApproxNet(nclass, *small_settings, m=1, comp_f='id',
+                  act='ternary', coeffs_generator=uniform_seq),
+    net.ApproxNet(nclass, *small_settings, m=1, comp_f='id',
+                  act='ternary', coeffs_generator=harmonic_seq),
+    net.ApproxNet(nclass, *small_settings, m=1, comp_f='id',
+                  act='ternary', coeffs_generator=linear_seq),
+    net.ApproxNet(nclass, *small_settings, m=1, comp_f='id',
+                  act='ternary', coeffs_generator=exp_seq),
+    net.ApproxNet(nclass, *small_settings, m=1, comp_f='id',
                   act='ternary', coeffs_generator=uniform_exp_seq),
 ]
-
 for name, model in zip(names, models):
     acc_dict[name] = []
     ratios_dict[name] = []
@@ -55,5 +57,6 @@ for name, model in zip(names, models):
         acc_dict[name].append(acc)
         ratios_dict[name].append(100. * cr)
 
-visualize.approx_acc(acc_dict, ratios_dict, names,
-                     prefix="approx_point_{}".format(args.dataset))
+filename = "coef_comparison_{}".format(args.dataset)
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+               xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)')

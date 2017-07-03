@@ -18,7 +18,7 @@ from binary.bconv import BinaryConvolution2D
 from binary.m_bconv import MBinaryConvolution2D
 from binary.ss_bconv import SSBinaryConvolution2D
 from binary.ww_bconv import WWBinaryConvolution2D
-from binary.ww_bconv_v2 import WWBinaryConvolution2DV2
+from binary.ww_bconv_v3 import WWBinaryConvolution2DV3, uniform_seq, harmonic_seq, linear_seq, exp_seq, uniform_exp_seq
 from binary.function_binary_convolution_2d import binary_convolution_2d
 from binary.bst import bst, mbst, mbst_bp
 import util
@@ -49,12 +49,12 @@ class BinaryBlock(chainer.Chain):
 
 class ApproxBlock(chainer.Chain):
     def __init__(self, num_fs, ksize=3, pksize=2, m=1, comp_f='exp',
-                 act='ternary', comp_mode='harmonic_seq_group'):
+                 act='ternary', coeffs_generator=uniform_seq):
         super(ApproxBlock, self).__init__()
         self.comp_f = comp_f
-        self.comp_mode = comp_mode
         self.m = m
         self.pksize = pksize
+        self.coeffs_generator = coeffs_generator
 
         if isinstance(num_fs, (int),):
             l1_f = l2_f = num_fs
@@ -71,50 +71,51 @@ class ApproxBlock(chainer.Chain):
             raise NameError("act={}".format(act))
 
         with self.init_scope():
-            self.l1 = WWBinaryConvolution2DV2(
-                l1_f, ksize, pad=1, mode=self.comp_mode)
+            self.l1 = BinaryConvolution2D(
+                l1_f, 1, pad=0)
             self.bn1 = L.BatchNormalization(l1_f)
-            self.l2 = WWBinaryConvolution2DV2(
-                l2_f, ksize, pad=1, mode=self.comp_mode)
+            self.l2 = WWBinaryConvolution2DV3(
+                l2_f, ksize, pad=1, coeffs_generator=self.coeffs_generator)
             self.bn2 = L.BatchNormalization(l2_f)
 
-    def __call__(self, x, comp_ratio=None, ret_param='loss'):
+    def __call__(self, x, comp_ratio=None, ret_param='loss', coeffs_generator=None):
         if not comp_ratio:
             comp_ratio = 1 - util.gen_prob(self.comp_f)
 
-        h = self.l1(x, ratio=comp_ratio)
+        h = self.l1(x)
         h = self.act(self.bn1(h))
-        h = self.l2(h, ratio=comp_ratio)
+        h = self.l2(h, ratio=comp_ratio,
+                    coeffs_generator=coeffs_generator or self.coeffs_generator)
         h = F.max_pooling_2d(h, self.pksize, stride=1)
         h = self.act(self.bn2(h))
         return h
 
-
 class ApproxNet(chainer.Chain):
     def __init__(self, n_out, l1_f, l2_f=None, l3_f=None, m=0, comp_f='exp',
-                 act='ternary', comp_mode='harmonic_seq_group'):
+                 act='ternary', coeffs_generator=uniform_seq):
         super(ApproxNet, self).__init__()
         self.n_out = n_out
         self.comp_f = comp_f
-        self.comp_mode = comp_mode
         self.l1_f = l1_f
         self.l2_f = l2_f
         self.l3_f = l3_f
+        self.coeffs_generator = coeffs_generator
 
         if not l2_f and l3_f:
             raise ValueError("l2_f must be set if l3_f is set.")
 
         with self.init_scope():
             self.l1 = ApproxBlock(l1_f, m=m, comp_f=comp_f,
-                                  act=act, comp_mode=comp_mode)
+                                  act=act, coeffs_generator=coeffs_generator)
             if l2_f:
                 self.l2 = BinaryBlock(l2_f)
             if l3_f:
                 self.l3 = BinaryBlock(l3_f)
             self.l4 = BinaryLinear(n_out)
 
-    def __call__(self, x, t, comp_ratio=None, filter_ratio=None, ret_param='loss'):
-        h = self.l1(x, comp_ratio, filter_ratio)
+    def __call__(self, x, t, comp_ratio=None, ret_param='loss', coeffs_generator=None):
+        h = self.l1(x, comp_ratio,
+                    coeffs_generator=coeffs_generator or self.coeffs_generator)
         if self.l2_f:
             h = self.l2(h)
         if self.l3_f:
@@ -137,26 +138,28 @@ class ApproxNet(chainer.Chain):
 
 
 class BinaryNet(chainer.Chain):
-    def __init__(self, n_out, l1_f, l2_f=None, l3_f=None):
+    def __init__(self, n_out, l1_f, l2_f=None, l3_f=None, coeffs_generator=uniform_seq):
         super(BinaryNet, self).__init__()
         self.l1_f = l1_f
         self.l2_f = l2_f
         self.l3_f = l3_f
+        self.coeffs_generator = coeffs_generator
 
         if not l2_f and l3_f:
             raise ValueError("l2_f must be set if l3_f is set.")
 
         with self.init_scope():
-            self.l1 = ApproxBlock(l1_f, m=1, comp_f='id', filter_f='id',
-                                  act='ternary', comp_mode='harmonic_seq')
+            self.l1 = ApproxBlock(
+                l1_f, m=1, comp_f='id', act='ternary', coeffs_generator=coeffs_generator)
             if l2_f:
                 self.l2 = BinaryBlock(l2_f)
             if l3_f:
                 self.l3 = BinaryBlock(l3_f)
             self.l4 = BinaryLinear(n_out)
 
-    def __call__(self, x, t, comp_ratio=None, filter_ratio=None, ret_param='loss'):
-        h = self.l1(x, comp_ratio, filter_ratio)
+    def __call__(self, x, t, comp_ratio=None, filter_ratio=None, ret_param='loss', coeffs_generator=None):
+        h = self.l1(x, comp_ratio, filter_ratio,
+                    coeffs_generator=coeffs_generator or self.coeffs_generator)
         if self.l2_f:
             h = self.l2(h)
         if self.l3_f:

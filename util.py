@@ -132,6 +132,13 @@ def get_approx_acc(model, dataset_tuple, comp_ratio, batchsize=1024, gpu=0):
     return (accs / len(x)) * 100.
 
 
+# def get_compute_amount(model, dataset_tuple, comp_ratio, batchsize=1024, gpu=0):
+#     xp = np if gpu < 0 else cuda.cupy
+#     x, _ = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
+#     model.train = False
+#     x_batch = xp.array(x[:2])
+#     return model.compute_amount(x_batch, comp_ratio=comp_ratio)
+
 def get_approx_features(model, dataset_tuple, ratio, do_type='random', batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
     x, _ = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
@@ -226,10 +233,14 @@ def get_dataset(dataset_name):
     raise NameError('{}'.format(dataset_name))
 
 
-def get_net_settings(dataset_name):
-    if dataset_name == 'mnist':
-        return (16, 8), 16, None
-    if dataset_name == 'cifar10':
+# small vs large only from dev perspective
+def get_net_settings(dataset_name, size='large'):
+    if dataset_name == 'mnist' and size == 'large':
+        return (8, 8), 16, None
+    if dataset_name == 'mnist' and size == 'small':
+        return (4, 4),8, None
+    if dataset_name == 'cifar10' and size == 'large':
         return 16, 32, 64
-        # return 16, 32, None
+    if dataset_name == 'cifar10' and size == 'small':
+        return (16, 8), 32, 64
     raise NameError('{}'.format(dataset_name))

@@ -61,6 +61,7 @@ class ApproxBlock(chainer.Chain):
         else:
             l1_f, l2_f = num_fs[0], num_fs[1]
 
+        self.l1_act = partial(mbst_bp, m=self.m)
         if act == 'ternary':
             self.act = partial(mbst_bp, m=self.m)
         elif act == 'binary':
@@ -83,7 +84,7 @@ class ApproxBlock(chainer.Chain):
             comp_ratio = 1 - util.gen_prob(self.comp_f)
 
         h = self.l1(x)
-        h = self.act(self.bn1(h))
+        h = self.l1_act(self.bn1(h))
         h = self.l2(h, ratio=comp_ratio,
                     coeffs_generator=coeffs_generator or self.coeffs_generator)
         h = F.max_pooling_2d(h, self.pksize, stride=1)
@@ -101,6 +102,8 @@ class ApproxNet(chainer.Chain):
         self.l2_f = l2_f
         self.l3_f = l3_f
         self.coeffs_generator = coeffs_generator
+        self.act = act
+        self.m = m
 
         if not l2_f and l3_f:
             raise ValueError("l2_f must be set if l3_f is set.")
@@ -138,7 +141,8 @@ class ApproxNet(chainer.Chain):
         l1_f = util.layers_str(self.l1_f)
         l2_f = util.layers_str(self.l2_f)
         l3_f = util.layers_str(self.l3_f)
-        return 'approx_[{},{},{}]_{}'.format(l1_f, l2_f, l3_f,  self.coeffs_generator.__name__)
+        return 'approx_[{},{},{}]_{}_[{}:{}]'.format(l1_f, l2_f, l3_f,  self.coeffs_generator.__name__,
+                                                     self.act, self.m)
 
 
 class BinaryNet(chainer.Chain):

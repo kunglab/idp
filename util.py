@@ -1,4 +1,5 @@
 import os
+import argparse
 from random import shuffle
 
 from functools import partial
@@ -59,6 +60,15 @@ def filter_dropout(x, ratio=.5, train=True):
     if train:
         return FilterDropout(ratio)(x)
     return x
+
+
+def layers_str(layers):
+    if not layers:
+        return '-1'
+    elif type(layers) == int:
+        return '{},{}'.format(layers, layers)
+    else:
+        return '{},{}'.format(layers[0], layers[1])
 
 
 def gen_prob(dist):
@@ -168,10 +178,8 @@ def get_class_acc(model, dataset_tuple, batchsize=128, gpu=0):
         return y_hat
 
 
-def train_model(model, train, test, args, out=None):
+def train_model(model, train, test, args):
     chainer.config.train = True
-    if not out:
-        out = args.out
     batchsize = args.batchsize
     n_epoch = args.epoch
     if args.gpu >= 0:
@@ -186,7 +194,7 @@ def train_model(model, train, test, args, out=None):
     test_iter = chainer.iterators.SerialIterator(test, args.batchsize,
                                                  repeat=False, shuffle=False)
     updater = training.StandardUpdater(train_iter, opt, device=args.gpu)
-    trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=out)
+    trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
     trainer.extend(extensions.Evaluator(test_iter, model, device=args.gpu))
     trainer.extend(extensions.LogReport())
     trainer.extend(extensions.PrintReport(
@@ -197,8 +205,8 @@ def train_model(model, train, test, args, out=None):
     trainer.run()
 
     name = model.param_names()
-    save_model(model, os.path.join(out, name))
-    with open(os.path.join(out, 'log'), 'r') as fp:
+    save_model(model, os.path.join(args.model_path, name))
+    with open(os.path.join(args.out, 'log'), 'r') as fp:
         return eval(fp.read().replace('\n', ''))
     chainer.config.train = False
 
@@ -217,12 +225,13 @@ def load_model(model, folder, gpu=0):
     return model
 
 
-def load_or_train_model(model, train, test, args, gpu=0):
+def load_or_train_model(model, train, test, args):
     name = model.param_names()
-    if not os.path.exists(os.path.join(args.out, name)):
-        train_model(model, train, test, args, out=args.out)
+    model_folder = os.path.join(args.model_path, name)
+    if not os.path.exists(model_folder) or args.overwrite_models:
+        train_model(model, train, test, args)
     else:
-        load_model(model, os.path.join(args.out, name), gpu=gpu)
+        load_model(model, model_folder, gpu=args.gpu)
 
 
 def get_dataset(dataset_name):
@@ -233,14 +242,33 @@ def get_dataset(dataset_name):
     raise NameError('{}'.format(dataset_name))
 
 
-# small vs large only from dev perspective
+# small vs large only from device perspective
 def get_net_settings(dataset_name, size='large'):
     if dataset_name == 'mnist' and size == 'large':
         return (8, 8), 16, None
     if dataset_name == 'mnist' and size == 'small':
-        return (4, 4),8, None
+        return (4, 4), 8, None
     if dataset_name == 'cifar10' and size == 'large':
-        return 16, 32, 64
+        return 16, 64, 128
     if dataset_name == 'cifar10' and size == 'small':
         return (16, 8), 32, 64
     raise NameError('{}'.format(dataset_name))
+
+
+def default_parser(description=''):
+    parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('--batchsize', '-b', type=int, default=128,
+                        help='learning minibatch size')
+    parser.add_argument('--epoch', '-e', default=20, type=int,
+                        help='number of epochs to learn')
+    parser.add_argument('--dataset', '-d', default='mnist',
+                        choices=['mnist', 'cifar10'], help='dataset name')
+    parser.add_argument('--gpu', '-g', default=0, type=int,
+                        help='GPU ID (negative value indicates CPU)')
+    parser.add_argument('--out', '-o', default='_output',
+                        help='Directory to output the result')
+    parser.add_argument('--model_path',  default='_models',
+                        help='Directory to store the models (for later use)')
+    parser.add_argument('--overwrite_models', action='store_true',
+                        help='If true, reruns a setting and overwrites old models')
+    return parser

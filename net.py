@@ -90,6 +90,7 @@ class ApproxBlock(chainer.Chain):
         h = self.act(self.bn2(h))
         return h
 
+
 class ApproxNet(chainer.Chain):
     def __init__(self, n_out, l1_f, l2_f=None, l3_f=None, m=0, comp_f='exp',
                  act='ternary', coeffs_generator=uniform_seq):
@@ -134,7 +135,10 @@ class ApproxNet(chainer.Chain):
         return ['validation/main/acc']
 
     def param_names(self):
-        return 'approx'
+        l1_f = util.layers_str(self.l1_f)
+        l2_f = util.layers_str(self.l2_f)
+        l3_f = util.layers_str(self.l3_f)
+        return 'approx_[{},{},{}]_{}'.format(l1_f, l2_f, l3_f,  self.coeffs_generator.__name__)
 
 
 class BinaryNet(chainer.Chain):
@@ -178,4 +182,7 @@ class BinaryNet(chainer.Chain):
         return ['validation/main/acc']
 
     def param_names(self):
-        return 'standard'
+        l1_f = util.layers_str(self.l1_f)
+        l2_f = util.layers_str(self.l2_f)
+        l3_f = util.layers_str(self.l3_f)
+        return 'standard_[{},{},{}]'.format(l1_f, l2_f, l3_f)

@@ -1,5 +1,3 @@
-import argparse
-
 import visualize
 
 import cupy
@@ -13,19 +11,7 @@ import net
 import util
 from binary.ww_bconv_v3 import uniform_seq, harmonic_seq, linear_seq, exp_seq, uniform_exp_seq
 
-parser = argparse.ArgumentParser(description='Chainer example: MNIST')
-parser.add_argument('--gpu', '-g', default=0, type=int,
-                    help='GPU ID (negative value indicates CPU)')
-parser.add_argument('--epoch', '-e', default=20, type=int,
-                    help='number of epochs to learn')
-parser.add_argument('--batchsize', '-b', type=int, default=128,
-                    help='learning minibatch size')
-parser.add_argument('--out', '-o', default='result',
-                    help='Directory to output the result')
-parser.add_argument('--mode', '-m', default='harmonic_seq_group')
-parser.add_argument('--comp_f', default='exp')
-parser.add_argument('--filter_f', default='exp')
-parser.add_argument('--dataset', '-d', default='mnist')
+parser = util.default_parser('Standard versus Incomplete Experiment')
 args = parser.parse_args()
 
 train, test = util.get_dataset(args.dataset)

@@ -17,14 +17,18 @@ args = parser.parse_args()
 train, test = util.get_dataset(args.dataset)
 nclass = np.bincount(test._datasets[1]).shape[0]
 large_settings = util.get_net_settings(args.dataset, size='large')
-comp_ratios = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-names = ['binary', r'ternary $(\epsilon=1)$']
-colors = ['#b35806', '#542788']
+comp_ratios = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+names = ['binary', r'ternary $(\epsilon=0.5)$', r'ternary $(\epsilon=1)$', r'ternary $(\epsilon=2)$']
+colors = ['#b2182b', '#4393c3', '#2166ac', '#053061']
 models = [
     net.ApproxNet(nclass, *large_settings, m=0, comp_f='id',
-                  act='binary', coeffs_generator=exp_seq),
+                  act='binary', coeffs_generator=linear_seq),
+    net.ApproxNet(nclass, *large_settings, m=0.5, comp_f='id',
+                  act='ternary', coeffs_generator=linear_seq),
     net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',
-                  act='ternary', coeffs_generator=exp_seq),
+                  act='ternary', coeffs_generator=linear_seq),
+    net.ApproxNet(nclass, *large_settings, m=2, comp_f='id',
+                  act='ternary', coeffs_generator=linear_seq),
 ]
 acc_dict = {}
 ratios_dict = {}

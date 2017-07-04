@@ -17,10 +17,10 @@ args = parser.parse_args()
 train, test = util.get_dataset(args.dataset)
 nclass = np.bincount(test._datasets[1]).shape[0]
 large_settings = util.get_net_settings(args.dataset, size='large')
-comp_ratios = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+comp_ratios = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 acc_dict = {}
 ratios_dict = {}
-names = ['uniform', 'harmonic', 'linear', 'exp', 'half_one']
+names = ['uniform (standard)', 'harmonic', 'linear', 'exp', 'half_one']
 colors = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00']
 models = [
     net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',

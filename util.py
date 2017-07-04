@@ -245,9 +245,9 @@ def get_dataset(dataset_name):
 # small vs large only from device perspective
 def get_net_settings(dataset_name, size='large'):
     if dataset_name == 'mnist' and size == 'large':
-        return (8, 8), 16, None
-    if dataset_name == 'mnist' and size == 'small':
         return (8, 4), 16, None
+    if dataset_name == 'mnist' and size == 'small':
+        return (8, 2), 16, None
     if dataset_name == 'cifar10' and size == 'large':
         return 16, 64, 128
     if dataset_name == 'cifar10' and size == 'small':

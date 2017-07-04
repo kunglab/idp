@@ -52,7 +52,7 @@ for name, model in zip(names, models):
         ratios_dict[name] = [0.5 * cr for cr in ratios_dict[name]]
 
 filename = "versus_standard_{}".format(args.dataset)
-visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.model_path+'/',
                xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)')
 
 filename = "versus_standard_{}_zoom".format(args.dataset)

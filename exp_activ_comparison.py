@@ -18,7 +18,8 @@ train, test = util.get_dataset(args.dataset)
 nclass = np.bincount(test._datasets[1]).shape[0]
 large_settings = util.get_net_settings(args.dataset, size='large')
 comp_ratios = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-names = ['binary', r'ternary $(\epsilon=0.5)$', r'ternary $(\epsilon=1)$', r'ternary $(\epsilon=2)$']
+names = ['binary', r'ternary $(\epsilon=0.5)$',
+         r'ternary $(\epsilon=1)$', r'ternary $(\epsilon=2)$']
 colors = ['#b2182b', '#4393c3', '#2166ac', '#053061']
 models = [
     net.ApproxNet(nclass, *large_settings, m=0, comp_f='id',
@@ -42,10 +43,10 @@ for name, model in zip(names, models):
         ratios_dict[name].append(100. * cr)
 
 filename = "activ_comparison_{}".format(args.dataset)
-visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.model_path+'/',
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.figure_path, ext=args.ext,
                xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)')
 
 filename = "activ_comparison_{}_zoom".format(args.dataset)
-visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.figure_path, ext=args.ext,
                xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)',
                ylim=(90, 100))

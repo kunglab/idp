@@ -267,8 +267,11 @@ def default_parser(description=''):
                         help='GPU ID (negative value indicates CPU)')
     parser.add_argument('--out', '-o', default='_output',
                         help='Directory to output the result')
-    parser.add_argument('--model_path',  default='_models',
+    parser.add_argument('--model_path',  default='_models/',
                         help='Directory to store the models (for later use)')
+    parser.add_argument('--figure_path',  default='_models/',
+                        help='Directory to store the generated figures')
     parser.add_argument('--overwrite_models', action='store_true',
                         help='If true, reruns a setting and overwrites old models')
+    parser.add_argument('--ext', default='png', choices=['png', 'pdf'])
     return parser

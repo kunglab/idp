@@ -46,16 +46,16 @@ for name, model in zip(names, models):
     for cr in comp_ratios:
         acc = util.get_approx_acc(model, test, comp_ratio=cr)
         acc_dict[name].append(acc)
-        ratios_dict[name].append(cr)
+        ratios_dict[name].append(100. * cr)
 
     if 'small' in name:
         ratios_dict[name] = [0.5 * cr for cr in ratios_dict[name]]
 
 filename = "versus_standard_{}".format(args.dataset)
-visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.model_path+'/',
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.figure_path, ext=args.ext,
                xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)')
 
 filename = "versus_standard_{}_zoom".format(args.dataset)
-visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.figure_path, ext=args.ext,
                xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)',
                ylim=(90, 100))

@@ -22,11 +22,15 @@ def add_colorbar(im, aspect=20, pad_fraction=0.5, **kwargs):
 
 # general plot function
 # xd and yd are dicts, keys are keys in the dicts
-def plot(xd, yd, keys, filename, colors, folder='figures/', ext='.png',
+def plot(xd, yd, keys, filename, colors, folder='figures/', ext='png',
          marker='o', xlabel=None, ylabel=None, xlim=None, ylim=None, title=None, linewidth=2):
     for i, key in enumerate(keys):
-        plt.plot(xd[key], yd[key], label=key, ms=4, marker=marker,
-                 color=colors[i], linestyle='--', dashes=dash_list[i], linewidth=linewidth)
+        if i == 0:
+            plt.plot(xd[key], yd[key], label=key, ms=4,
+                     marker=marker, color=colors[i], linewidth=linewidth)
+        else:
+            plt.plot(xd[key], yd[key], label=key, ms=4, marker=marker,
+                     color=colors[i], linestyle='--', dashes=dash_list[i], linewidth=linewidth)
 
     if xlabel:
         plt.xlabel(xlabel)
@@ -41,7 +45,8 @@ def plot(xd, yd, keys, filename, colors, folder='figures/', ext='.png',
     plt.legend(loc=0, handlelength=3)
     plt.tight_layout()
     plt.grid()
-    plt.savefig('{}{}{}'.format(folder, filename, ext), dpi=300)
+    full_file = '{}{}.{}'.format(folder, filename, ext)
+    plt.savefig(full_file, dpi=300)
     plt.clf()
 
 

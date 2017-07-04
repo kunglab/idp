@@ -44,10 +44,10 @@ for name, model in zip(names, models):
         ratios_dict[name].append(100. * cr)
 
 filename = "coef_comparison_{}".format(args.dataset)
-visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.model_path+'/',
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.figure_path, ext=args.ext,
                xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)')
 
 filename = "coef_comparison_{}_zoom".format(args.dataset)
-visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.figure_path, ext=args.ext,
                xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)',
                ylim=(90,100))

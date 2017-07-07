@@ -20,7 +20,7 @@ large_settings = util.get_net_settings(args.dataset, size='large')
 comp_ratios = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 names = ['binary', r'ternary $(\epsilon=0.5)$',
          r'ternary $(\epsilon=1)$', r'ternary $(\epsilon=2)$']
-colors = ['#b2182b', '#4393c3', '#2166ac', '#053061']
+colors = ['#762a83', '#5aae61', '#1b7837', '#00441b']
 models = [
     net.ApproxNet(nclass, *large_settings, m=0, comp_f='id',
                   act='binary', coeffs_generator=linear_seq),

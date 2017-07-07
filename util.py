@@ -23,6 +23,12 @@ from chainer import cuda
 from chainer import function
 from chainer.utils import type_check
 
+def zero_end(coefs, coef_ratio):
+    if coef_ratio is None:
+        return np.array(coefs)
+    coefs = np.array(coefs)
+    coefs[int(coef_ratio*len(coefs)):] = 0
+    return coefs
 
 class FilterDropout(function.Function):
     def __init__(self, dropout_ratio):

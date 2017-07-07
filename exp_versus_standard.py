@@ -20,9 +20,9 @@ small_settings = util.get_net_settings(args.dataset, size='small')
 large_settings = util.get_net_settings(args.dataset, size='large')
 large_crs = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 small_crs = [0.6, 0.7, 0.8, 0.9, 1.0]
-names = ['incomplete-large', 'incomplete-small',
-         'standard-large', 'standard-small']
-colors = ['#d73027', '#f46d43', '#1a9850', '#66bd63']
+names = ['harmonic (IDP-large)', 'harmonic (IDP-small)',
+         'all-one (standard-large)', 'all-one (standard-small)']
+colors = ['#377eb8', '#377eb8', '#d73027', '#d73027']
 models = [
     net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',
                   act='ternary', coeffs_generator=harmonic_seq),

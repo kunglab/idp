@@ -21,6 +21,9 @@ from binary.ww_bconv import WWBinaryConvolution2D
 from binary.ww_bconv_v3 import WWBinaryConvolution2DV3, uniform_seq, harmonic_seq, linear_seq, exp_seq, uniform_exp_seq
 from binary.function_binary_convolution_2d import binary_convolution_2d
 from binary.bst import bst, mbst, mbst_bp
+from approx.links_depthwise_convolution_2d import IncompleteDepthwiseConvolution2D
+from approx.links_convolution_2d import IncompleteConvolution2D
+from approx.links_linear import IncompleteLinear
 import util
 
 
@@ -190,3 +193,38 @@ class BinaryNet(chainer.Chain):
         l2_f = util.layers_str(self.l2_f)
         l3_f = util.layers_str(self.l3_f)
         return 'standard_[{},{},{}]'.format(l1_f, l2_f, l3_f)
+
+
+class ApproxDNet(chainer.Chain):
+    def __init__(self, coeffs_generator):
+        super(ApproxDNet, self).__init__()
+        self.coeffs_generator = coeffs_generator
+
+        with self.init_scope():
+            self.dc1 = IncompleteDepthwiseConvolution2D(1, 16, 3, 1, 1)
+            self.c1 = IncompleteConvolution2D(16, 16, 1, 1, 0)
+            self.dc2 = IncompleteDepthwiseConvolution2D(16, 16, 3, 1, 1)
+            self.c2 = IncompleteConvolution2D(256, 256, 1, 1, 0)
+            self.l1 = L.Linear(10)
+
+    def __call__(self, x, t, comp_ratio=None, ret_param='loss', coeffs_generator=None):
+        g = self.coeffs_generator
+        h = F.relu(self.dc1(x, [1]))
+        h = F.relu(self.c1(h, util.zero_end(g(16), comp_ratio)))
+        h = F.relu(self.dc2(h, util.zero_end(g(16), comp_ratio)))
+        h = F.relu(self.c2(h, util.zero_end(g(256), comp_ratio)))
+        h = self.l1(h)
+
+        report = {
+            'loss': softmax(h, t),
+            'acc': F.accuracy(h, t)
+        }
+
+        reporter.report(report, self)
+        return report[ret_param]
+
+    def report_params(self):
+        return ['validation/main/acc']
+
+    def param_names(self):
+        return 'approxdnet'

@@ -46,6 +46,7 @@ def plot(xd, yd, keys, filename, colors, folder='figures/', ext='png',
     plt.tight_layout()
     plt.grid()
     full_file = '{}{}.{}'.format(folder, filename, ext)
+    print(full_file)
     plt.savefig(full_file, dpi=300)
     plt.clf()
 

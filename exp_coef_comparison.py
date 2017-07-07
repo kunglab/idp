@@ -20,7 +20,7 @@ large_settings = util.get_net_settings(args.dataset, size='large')
 comp_ratios = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 acc_dict = {}
 ratios_dict = {}
-names = ['uniform (standard)', 'harmonic', 'linear', 'exp', 'half_one']
+names = ['all-one (standard)', 'harmonic', 'linear', 'exp', 'half-one']
 colors = ['#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00']
 models = [
     net.ApproxNet(nclass, *large_settings, m=1, comp_f='id',

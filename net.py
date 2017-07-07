@@ -209,9 +209,9 @@ class ApproxDNet(chainer.Chain):
 
     def __call__(self, x, t, comp_ratio=None, ret_param='loss', coeffs_generator=None):
         g = self.coeffs_generator
-        h = F.relu(self.dc1(x, [1]))
+        h = F.relu(self.dc1(x, util.zero_end(g(1), 1.0)))
         h = F.relu(self.c1(h, util.zero_end(g(16), comp_ratio)))
-        h = F.relu(self.dc2(h, util.zero_end(g(16), comp_ratio)))
+        h = F.relu(self.dc2(h, util.zero_end(g(16), 1.0)))
         h = F.relu(self.c2(h, util.zero_end(g(256), comp_ratio)))
         h = self.l1(h)
 
@@ -227,4 +227,4 @@ class ApproxDNet(chainer.Chain):
         return ['validation/main/acc']
 
     def param_names(self):
-        return 'approxdnet'
+        return 'approxdnet_{}'.format(self.coeffs_generator.__name__)

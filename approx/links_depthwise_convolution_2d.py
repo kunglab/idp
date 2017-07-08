@@ -45,13 +45,15 @@ class IncompleteDepthwiseConvolution2D(link.Link):
 
     """
 
-    def __init__(self, in_channels, channel_multiplier, ksize, stride=1, pad=0,
+    def __init__(self, in_channels, out_channels, ksize=None, stride=1, pad=0,
                  nobias=False, initialW=None, initial_bias=None):
         super(IncompleteDepthwiseConvolution2D, self).__init__()
+        if ksize is None:
+            out_channels, ksize, in_channels = in_channels, out_channels, None
         self.ksize = ksize
         self.stride = _pair(stride)
         self.pad = _pair(pad)
-        self.channel_multiplier = channel_multiplier
+        self.channel_multiplier = out_channels
         self.nobias = nobias
 
         if initialW is None:

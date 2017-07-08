@@ -95,6 +95,33 @@ class ApproxBlock(chainer.Chain):
         return h
 
 
+class IncompleteDepthwiseBlock(chainer.Chain):
+    def __init__(self, in_chan, num_f, coeffs_generator, act, stride=1):
+        super(IncompleteDepthwiseBlock, self).__init__()
+        self.in_chan = in_chan
+        self.num_f = num_f
+        self.coeffs_generator = coeffs_generator
+        self.act = act
+        with self.init_scope():
+            self.dc = IncompleteDepthwiseConvolution2D(
+                self.in_chan, 1, 3, pad=1, stride=stride)
+            self.bn1 = L.BatchNormalization(self.in_chan)
+            self.pc = IncompleteConvolution2D(self.num_f, 1)
+            self.bn2 = L.BatchNormalization(self.num_f)
+
+    def __call__(self, x, comp_ratio=None):
+        def coeff_f(n):
+            return util.zero_end(self.coeffs_generator(n), comp_ratio)
+
+        h = self.dc(x, coeff_f(self.in_chan))
+        h = self.bn1(h)
+        h = self.act(h)
+        h = self.pc(h, coeff_f(self.in_chan))
+        h = self.bn2(h)
+        h = self.act(h)
+        return h
+
+
 class ApproxNet(chainer.Chain):
     def __init__(self, n_out, l1_f, l2_f=None, l3_f=None, m=0, comp_f='exp',
                  act='ternary', coeffs_generator=uniform_seq):
@@ -195,24 +222,44 @@ class BinaryNet(chainer.Chain):
         return 'standard_[{},{},{}]'.format(l1_f, l2_f, l3_f)
 
 
-class ApproxDNet(chainer.Chain):
-    def __init__(self, coeffs_generator):
-        super(ApproxDNet, self).__init__()
+class IncompleteDepthwiseNet(chainer.Chain):
+    def __init__(self, coeffs_generator, act):
+        super(IncompleteDepthwiseNet, self).__init__()
         self.coeffs_generator = coeffs_generator
+        self.act = act
+        self.l1_f = 32
+        self.l2_f = 64
+        self.l3_f = 128
 
         with self.init_scope():
-            self.dc1 = IncompleteDepthwiseConvolution2D(1, 16, 3, 1, 1)
-            self.c1 = IncompleteConvolution2D(16, 16, 1, 1, 0)
-            self.dc2 = IncompleteDepthwiseConvolution2D(16, 16, 3, 1, 1)
-            self.c2 = IncompleteConvolution2D(256, 256, 1, 1, 0)
-            self.l1 = L.Linear(10)
+            self.c0 = IncompleteConvolution2D(self.l1_f, 3, pad=1, stride=2)
+            self.bn0 = L.BatchNormalization(self.l1_f)
+            self.d1 = IncompleteDepthwiseBlock(
+                self.l1_f, self.l2_f, coeffs_generator, self.act, stride=1)
+            self.d2 = IncompleteDepthwiseBlock(
+                self.l2_f, self.l3_f, coeffs_generator, self.act, stride=2)
+            self.d3 = IncompleteDepthwiseBlock(
+                self.l3_f, self.l3_f, coeffs_generator, self.act, stride=1)
+            self.d4 = IncompleteDepthwiseBlock(
+                self.l3_f, self.l3_f, coeffs_generator, self.act, stride=1)
+            self.d5 = IncompleteDepthwiseBlock(
+                self.l3_f, self.l3_f, coeffs_generator, self.act, stride=1)
+            self.d6 = IncompleteDepthwiseBlock(
+                self.l3_f, self.l3_f, coeffs_generator, self.act, stride=1)
+            self.l1 = IncompleteLinear(10)
 
-    def __call__(self, x, t, comp_ratio=None, ret_param='loss', coeffs_generator=None):
-        g = self.coeffs_generator
-        h = F.relu(self.dc1(x, util.zero_end(g(1), 1.0)))
-        h = F.relu(self.c1(h, util.zero_end(g(16), comp_ratio)))
-        h = F.relu(self.dc2(h, util.zero_end(g(16), 1.0)))
-        h = F.relu(self.c2(h, util.zero_end(g(256), comp_ratio)))
+    def __call__(self, x, t, comp_ratio=None, ret_param='loss'):
+        def coeff_f(n):
+            return util.zero_end(self.coeffs_generator(n), comp_ratio)
+
+        h = self.act(self.bn0(self.c0(x)))
+        h = self.d1(h, comp_ratio)
+        h = self.d2(h, comp_ratio)
+        h = self.d3(h, comp_ratio)
+        h = self.d4(h, comp_ratio)
+        h = self.d5(h, comp_ratio)
+        h = self.d6(h, comp_ratio)
+        # h = self.l1(h, coeff_f(np.prod(h.shape[1:])))
         h = self.l1(h)
 
         report = {
@@ -227,4 +274,4 @@ class ApproxDNet(chainer.Chain):
         return ['validation/main/acc']
 
     def param_names(self):
-        return 'approxdnet_{}'.format(self.coeffs_generator.__name__)
+        return 'approxdnet_{}_{}'.format(self.coeffs_generator.__name__, self.act.__name__)

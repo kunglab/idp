@@ -23,13 +23,13 @@ colors = ['#377eb8', '#d73027']
 comp_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 acc_dict = {}
 ratios_dict = {}
-names = ['all-one', 'harmonic']
+names = ['harmonic-relu', 'all-one-relu']
 models = [
-    net.ApproxDNet(uniform_seq),
-    net.ApproxDNet(harmonic_seq),
+    net.IncompleteDepthwiseNet(uniform_seq, F.relu),
+    net.IncompleteDepthwiseNet(harmonic_seq, F.relu),
 ]
 for name, model in zip(names, models):
-    util.train_model(model, train, test, args)
+    util.load_or_train_model(model, train, test, args)
     acc_dict[name] = []
     ratios_dict[name] = []
     for cr in comp_ratios:
@@ -40,5 +40,4 @@ for name, model in zip(names, models):
 
 filename = "versus_depthwise_{}".format(args.dataset)
 visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors, folder=args.figure_path, ext=args.ext,
-               xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)',
-               ylim=(90, 100))
+               xlabel='Dot Product Component (%)', ylabel='Classification Accuracy (%)')

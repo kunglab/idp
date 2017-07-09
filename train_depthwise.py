@@ -19,14 +19,16 @@ args = parser.parse_args()
 train, test = util.get_dataset(args.dataset)
 l1_f, l2_f, l3_f = util.get_net_settings(args.dataset)
 
-colors = ['#377eb8', '#d73027']
+colors = ['#377eb8', '#d73027', '#377eb8', '#d73027']
 comp_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
 acc_dict = {}
 ratios_dict = {}
-names = ['harmonic-relu', 'all-one-relu']
+names = ['all-one-relu', 'harmonic-relu', 'all-one-tanh', 'harmonic-tanh']
 models = [
     net.IncompleteDepthwiseNet(uniform_seq, F.relu),
     net.IncompleteDepthwiseNet(harmonic_seq, F.relu),
+    net.IncompleteDepthwiseNet(uniform_seq, F.tanh),
+    net.IncompleteDepthwiseNet(harmonic_seq, F.tanh),
 ]
 for name, model in zip(names, models):
     util.load_or_train_model(model, train, test, args)

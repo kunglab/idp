@@ -230,9 +230,10 @@ class IncompleteDepthwiseNet(chainer.Chain):
         self.l1_f = 32
         self.l2_f = 64
         self.l3_f = 128
+        self.l4_f = 128
 
         with self.init_scope():
-            self.c0 = IncompleteConvolution2D(self.l1_f, 3, pad=1, stride=2)
+            self.c0 = IncompleteConvolution2D(self.l1_f, 3, pad=1, stride=1)
             self.bn0 = L.BatchNormalization(self.l1_f)
             self.d1 = IncompleteDepthwiseBlock(
                 self.l1_f, self.l2_f, coeffs_generator, self.act, stride=1)
@@ -241,11 +242,11 @@ class IncompleteDepthwiseNet(chainer.Chain):
             self.d3 = IncompleteDepthwiseBlock(
                 self.l3_f, self.l3_f, coeffs_generator, self.act, stride=1)
             self.d4 = IncompleteDepthwiseBlock(
-                self.l3_f, self.l3_f, coeffs_generator, self.act, stride=1)
+                self.l3_f, self.l3_f, coeffs_generator, self.act, stride=2)
             self.d5 = IncompleteDepthwiseBlock(
-                self.l3_f, self.l3_f, coeffs_generator, self.act, stride=1)
+                self.l3_f, self.l4_f, coeffs_generator, self.act, stride=1)
             self.d6 = IncompleteDepthwiseBlock(
-                self.l3_f, self.l3_f, coeffs_generator, self.act, stride=1)
+                self.l4_f, self.l4_f, coeffs_generator, self.act, stride=1)
             self.l1 = IncompleteLinear(10)
 
     def __call__(self, x, t, comp_ratio=None, ret_param='loss'):
@@ -255,10 +256,10 @@ class IncompleteDepthwiseNet(chainer.Chain):
         h = self.act(self.bn0(self.c0(x)))
         h = self.d1(h, comp_ratio)
         h = self.d2(h, comp_ratio)
-        h = self.d3(h, comp_ratio)
-        h = self.d4(h, comp_ratio)
-        h = self.d5(h, comp_ratio)
-        h = self.d6(h, comp_ratio)
+        # h = self.d3(h, comp_ratio)
+        # h = self.d4(h, comp_ratio)
+        # h = self.d5(h, comp_ratio)
+        # h = self.d6(h, comp_ratio)
         # h = self.l1(h, coeff_f(np.prod(h.shape[1:])))
         h = self.l1(h)
 

@@ -5,6 +5,7 @@ import chainer.functions as F
 import chainer.links as L
 from chainer import reporter
 from approx.links_convolution_2d import IncompleteConvolution2D
+from binary.ww_bconv_v3 import uniform_seq, harmonic_seq, linear_seq, exp_seq, uniform_exp_seq
 import util
 
 conv = IncompleteConvolution2D
@@ -35,7 +36,7 @@ class VGG(chainer.Chain):
         self.coeff_generator = coeff_generator
         g = coeff_generator
         with self.init_scope():
-            self.block1_1 = Block(3, 64, 3, g)
+            self.block1_1 = Block(3, 64, 3, uniform_seq)
             self.block1_2 = Block(64, 64, 3, g)
             self.block2_1 = Block(64, 128, 3, g)
             self.block2_2 = Block(128, 128, 3, g)
@@ -54,7 +55,7 @@ class VGG(chainer.Chain):
 
     def __call__(self, x, t, ret_param='loss', comp_ratio=None):
         # 64 channel blocks:
-        h = self.block1_1(x, comp_ratio)
+        h = self.block1_1(x, 1.0)
         h = F.dropout(h, ratio=0.3)
         h = self.block1_2(h, comp_ratio)
         h = F.max_pooling_2d(h, ksize=2, stride=2)

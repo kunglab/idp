@@ -23,12 +23,14 @@ from chainer import cuda
 from chainer import function
 from chainer.utils import type_check
 
+
 def zero_end(coefs, coef_ratio):
     if coef_ratio is None:
         return np.array(coefs)
     coefs = np.array(coefs)
-    coefs[int(coef_ratio*len(coefs)):] = 0
+    coefs[int(coef_ratio * len(coefs)):] = 0
     return coefs
+
 
 class FilterDropout(function.Function):
     def __init__(self, dropout_ratio):
@@ -193,15 +195,18 @@ def train_model(model, train, test, args):
         model.to_gpu()
 
     xp = np if args.gpu < 0 else cuda.cupy
-    lr_start = 0.00003
-    opt = optimizers.Adam(lr_start)
+    opt = chainer.optimizers.MomentumSGD(args.learnrate)
     opt.setup(model)
+    opt.add_hook(chainer.optimizer.WeightDecay(5e-4))
+
     train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
     test_iter = chainer.iterators.SerialIterator(test, args.batchsize,
                                                  repeat=False, shuffle=False)
     updater = training.StandardUpdater(train_iter, opt, device=args.gpu)
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
     trainer.extend(extensions.Evaluator(test_iter, model, device=args.gpu))
+    trainer.extend(extensions.ExponentialShift('lr', 0.5),
+                   trigger=(25, 'epoch'))
     trainer.extend(extensions.LogReport())
     trainer.extend(extensions.PrintReport(
         ['epoch', 'main/loss', 'validation/main/loss'] +
@@ -273,6 +278,8 @@ def default_parser(description=''):
                         help='GPU ID (negative value indicates CPU)')
     parser.add_argument('--out', '-o', default='_output',
                         help='Directory to output the result')
+    parser.add_argument('--learnrate', '-l', type=float, default=0.05,
+                        help='Learning rate for SGD')
     parser.add_argument('--model_path',  default='_models/',
                         help='Directory to store the models (for later use)')
     parser.add_argument('--figure_path',  default='_models/',

@@ -1,4 +1,4 @@
-import pathlib
+import os
 
 import cupy
 import matplotlib
@@ -24,6 +24,8 @@ def add_colorbar(im, aspect=20, pad_fraction=0.5, **kwargs):
 # xd and yd are dicts, keys are keys in the dicts
 def plot(xd, yd, keys, filename, colors, folder='figures/', ext='png',
          marker='o', xlabel=None, ylabel=None, xlim=None, ylim=None, title=None, linewidth=2):
+    if not os.path.exists(folder):
+        os.makedirs(folder)
     for i, key in enumerate(keys):
         if i == 0:
             plt.plot(xd[key], yd[key], label=key, ms=4,
@@ -55,7 +57,6 @@ def conv_approx(hs, ratios, save_name, folder='figures/slices/', ext='.png'):
     vmax = np.max([np.max(h) for h in hs])
     vmin = np.min([np.min(h) for h in hs])
     print(vmax)
-    #pathlib.Path(folder).mkdir(parents=True, exist_ok=True)
     fig, axarr = plt.subplots(1, len(hs))
     for i in range(len(hs)):
         im = axarr[i].imshow(hs[i][0][0].astype(int), vmin=vmin,
@@ -69,7 +70,6 @@ def conv_approx(hs, ratios, save_name, folder='figures/slices/', ext='.png'):
 
 
 def layer_01s(l1, l2, folder='figures/', ext='.png'):
-    #pathlib.Path(folder).mkdir(parents=True, exist_ok=True)
     plt.plot(l1, label='l1')
     plt.plot(l2, label='l2')
     plt.legend(loc=0)
@@ -80,7 +80,6 @@ def layer_01s(l1, l2, folder='figures/', ext='.png'):
 
 
 def approx_match(alike_dict, ratios, folder='figures/', prefix='', ext='.png'):
-    #pathlib.Path(folder).mkdir(parents=True, exist_ok=True)
     keys = list(alike_dict.keys())
     # keys.sort(key=float)
     for key in keys:

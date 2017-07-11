@@ -17,11 +17,11 @@ def uniform_exp_seq(n,k=1):
     n_rest = n - n//2
     return uniform_seq(n_half) + exp_seq(n_rest,k)
 
-def step(n,steps):
+def step(n,steps=[1]):
     num = len(steps)
     i = 0
     coeffs = []
     for step in steps:
-        coeffs.extend([step for j in range(n//num+1)])
+        coeffs.extend([step for j in range(int(round(1.*n/num)))])
         i = i + 1
     return coeffs[:n]

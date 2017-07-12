@@ -29,15 +29,6 @@ def zero_end(coefs, coef_ratio):
     return coefs
 
 
-def layers_str(layers):
-    if not layers:
-        return '-1'
-    elif type(layers) == int:
-        return '{},{}'.format(layers, layers)
-    else:
-        return '{},{}'.format(layers[0], layers[1])
-
-
 def gen_prob(dist):
     if dist == 'exp':
         return exp_prob(w=0.25)
@@ -73,11 +64,6 @@ def linear_prob(w=10):
     return 1 - np.random.choice(range(w), p=weights) / float(w)
 
 
-def pct_alike(x, y):
-    x, y = x.flatten(), y.flatten()
-    return len(np.where(x == y)[0]) / float(len(x))
-
-
 def get_acc(model, dataset_tuple, ret_param='acc', batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
@@ -93,7 +79,7 @@ def get_acc(model, dataset_tuple, ret_param='acc', batchsize=1024, gpu=0):
     return (accs / len(x)) * 100.
 
 
-def get_approx_acc(model, dataset_tuple, comp_ratio, batchsize=1024, gpu=0):
+def get_idp_acc(model, dataset_tuple, comp_ratio, batchsize=1024, gpu=0):
     xp = np if gpu < 0 else cuda.cupy
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     accs = 0
@@ -109,10 +95,16 @@ def get_approx_acc(model, dataset_tuple, comp_ratio, batchsize=1024, gpu=0):
     return (accs / len(x)) * 100.
 
 
+def sweep_idp(model, dataset, comp_ratios, args):
+    accs = []
+    for cr in comp_ratios:
+        accs.append(get_idp_acc(model, dataset, comp_ratio=cr, 
+                                batchsize=args.batchsize, gpu=args.gpu))
+    return accs
+
+
 def train_model(model, train, test, args):
     chainer.config.train = True
-    batchsize = args.batchsize
-    n_epoch = args.epoch
     if args.gpu >= 0:
         cuda.get_device(args.gpu).use()
         model.to_gpu()
@@ -162,6 +154,7 @@ def load_model(model, folder, gpu=0):
 def load_or_train_model(model, train, test, args):
     name = model.param_names()
     model_folder = os.path.join(args.model_path, name)
+    print(model_folder)
     if not os.path.exists(model_folder) or args.overwrite_models:
         train_model(model, train, test, args)
     else:

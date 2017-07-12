@@ -3,7 +3,7 @@ import sys
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
-import visualize
+import visualize as vz
 from idp.coeffs_generator import uniform_seq, linear_seq, harmonic_seq
 from net import MobileNet
 import util
@@ -11,30 +11,25 @@ import util
 
 def run(args):
     train, test = util.get_dataset(args.dataset)
-    colors = ['#377eb8', '#d73027']
-    comp_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
-    names = ['all-one-relu', 'harmonic-relu']
+    names = ['all-one (standard)', 'linear']
+    colors = [vz.colors.all_one_lg, vz.colors.linear_lg]
     models = [
-        MobileNet.MobileNet(uniform_seq),
-        MobileNet.MobileNet(harmonic_seq)
+        MobileNet.MobileNet(10, uniform_seq),
+        MobileNet.MobileNet(10, linear_seq)
     ]
+    comp_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     acc_dict = {}
     ratios_dict = {}
     for name, model in zip(names, models):
         util.load_or_train_model(model, train, test, args)
-        acc_dict[name] = []
-        ratios_dict[name] = []
-        for cr in comp_ratios:
-            acc = util.get_approx_acc(model, test, comp_ratio=cr)
-            print(cr, acc)
-            acc_dict[name].append(acc)
-            ratios_dict[name].append(100. * cr)
+        acc_dict[name] = util.sweep_idp(model, test, comp_ratios, args)
+        ratios_dict[name] = [100. * cr for cr in comp_ratios]
 
     filename = "MobileNet_{}".format(args.dataset)
-    visualize.plot(ratios_dict, acc_dict, names, filename, colors=colors,
-                   folder=args.figure_path, ext=args.ext,
-                   xlabel='Dot Product Component (%)',
-                   ylabel='Classification Accuracy (%)')
+    vz.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+            folder=args.figure_path, ext=args.ext,
+            xlabel='Dot Product Component (%)',
+            ylabel='Classification Accuracy (%)')
 
 
 if __name__ == '__main__':

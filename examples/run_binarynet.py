@@ -1,4 +1,4 @@
-import mobilenet
+import binarynet
 import util
 
 if __name__ == '__main__':
@@ -8,5 +8,5 @@ if __name__ == '__main__':
     args = util.default_parser().parse_args()
     args.epoch = 4 
     args.batchsize = 64
-    args.dataset = 'cifar10'
-    mobilenet.run(args)
+    args.dataset = 'mnist'
+    binarynet.run(args)

@@ -13,15 +13,14 @@ from idp.coeffs_generator import uniform_seq, harmonic_seq, linear_seq, exp_seq,
 import util
 
 class MLP(chainer.Chain):
-    def __init__(self, n_units, n_out, coeff_generator):
+    def __init__(self, class_labels, coeff_generator, n_units=100):
         super(MLP, self).__init__()
-        self.n_units = n_units
-        self.n_out = n_out
         self.coeff_generator = coeff_generator
+        self.n_units = n_units
         with self.init_scope():
-            self.l1 = L.Linear(n_units)
-            self.l2 = IncompleteLinear(n_units)
-            self.l3 = L.Linear(n_out)
+            self.l1 = L.Linear(self.n_units)
+            self.l2 = IncompleteLinear(self.n_units)
+            self.l3 = L.Linear(class_labels)
 
     def __call__(self, x, t, ret_param='loss', comp_ratio=None):
         if comp_ratio == None:

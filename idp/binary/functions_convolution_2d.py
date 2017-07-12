@@ -80,7 +80,7 @@ class Convolution2DFunction(function.Function):
         x, W = inputs[:2]
         
         xp = cuda.get_array_module(*x)
-        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=True)
+        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)
         
         b = inputs[2] if len(inputs) == 3 else None
 
@@ -120,7 +120,7 @@ class Convolution2DFunction(function.Function):
         x, W = inputs[:2]
         
         xp = cuda.get_array_module(*x)
-        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=True)
+        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)
         
         b = inputs[2] if len(inputs) == 3 else None
         
@@ -215,8 +215,8 @@ class Convolution2DFunction(function.Function):
         x, W = inputs[:2]
         
         xp = cuda.get_array_module(*x)
-        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=True)
-
+        
+        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)
         W = self.M*W
         b = inputs[2] if len(inputs) == 3 else None
 
@@ -254,8 +254,8 @@ class Convolution2DFunction(function.Function):
         x, W = inputs[:2]
         
         xp = cuda.get_array_module(*x)
-        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=True)
-
+        
+        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)
         W = self.M*W
         b = inputs[2] if len(inputs) == 3 else None
 

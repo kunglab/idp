@@ -38,7 +38,7 @@ class LinearFunction(function.Function):
         W = inputs[1]
 
         xp = cuda.get_array_module(*x)
-        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=True)
+        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)        
         #print('Wbf',W)
 
         olen, ilen = W.shape
@@ -51,6 +51,8 @@ class LinearFunction(function.Function):
         self.M = M
         W = self.M*W
         
+        # print(xp.sum(W), xp.sum(x))
+
         if not type_check.same_types(*inputs):
             raise ValueError('numpy and cupy must not be used together\n'
                              'type(W): {0}, type(x): {1}'
@@ -67,9 +69,9 @@ class LinearFunction(function.Function):
         W = inputs[1]
         
         xp = cuda.get_array_module(*x)
-        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=True)
         #print('Waf',W)
 
+        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)
         W = self.M * W
         gy = grad_outputs[0]
 

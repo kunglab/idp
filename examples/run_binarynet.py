@@ -8,5 +8,6 @@ if __name__ == '__main__':
     args = util.default_parser().parse_args()
     args.epoch = 4 
     args.batchsize = 64
+    args.learnrate = 1e-4
     args.dataset = 'mnist'
     binarynet.run(args)

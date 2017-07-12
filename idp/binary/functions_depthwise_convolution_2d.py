@@ -56,7 +56,7 @@ class DepthwiseConvolution2D(function.Function):
         kh, kw = W.shape[2:]
         
         xp = cuda.get_array_module(*x)
-        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=True)
+        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)
 
         olen, ilen, hlen, wlen = W.shape
         if self.coeffs is None:
@@ -69,7 +69,7 @@ class DepthwiseConvolution2D(function.Function):
         M = xp.asarray(coeffs,numpy.float32).reshape(W.shape)
         self.M = M        
         W = self.M*W
-        
+
         if xp is numpy:
             self.col = conv.im2col_cpu(
                 x, kh, kw, self.sy, self.sx, self.ph, self.pw)
@@ -98,7 +98,7 @@ class DepthwiseConvolution2D(function.Function):
         x, W = inputs[:2]
         
         xp = cuda.get_array_module(*x)
-        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=True)
+        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)
         
         W = self.M*W
         b = inputs[2] if len(inputs) == 3 else None

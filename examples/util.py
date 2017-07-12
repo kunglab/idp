@@ -110,6 +110,7 @@ def train_model(model, train, test, args):
         model.to_gpu()
 
     xp = np if args.gpu < 0 else cuda.cupy
+    # opt = chainer.optimizers.MomentumSGD(args.learnrate)
     opt = chainer.optimizers.MomentumSGD(args.learnrate)
     opt.setup(model)
     opt.add_hook(chainer.optimizer.WeightDecay(5e-4))

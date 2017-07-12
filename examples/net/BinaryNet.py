@@ -1,10 +1,6 @@
 import os
 import sys
-sys.path.insert(0, os.path.abspath(
-    os.path.join(os.path.dirname(__file__), '..')))
 from functools import partial
-
-
 import chainer
 import chainer.functions as F
 import chainer.links as L
@@ -72,7 +68,7 @@ class BinaryConvNet(chainer.Chain):
             self.l1 = Block(1, 32, 3, g, act, input_layer=True)
             self.l2 = Block(32, 64, 3, g, act)
             self.l3 = Block(64, 64, 3, g, act)
-            self.l4 = IncompleteBinaryLinear(class_labels)
+            self.l4 = IncompleteBinaryLinear(None,class_labels)
 
     def __call__(self, x, t, ret_param='loss', comp_ratio=None):
         h = self.l1(x, comp_ratio)

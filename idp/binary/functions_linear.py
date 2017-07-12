@@ -3,12 +3,6 @@ from chainer.utils import type_check
 from chainer import cuda
 import numpy
 
-def _kern():
-    return cuda.elementwise(
-        'T x', 'T y',
-        'y = x >= 0 ? 1 : -1',
-        'binarize')
-
 def _as_mat(x):
     if x.ndim == 2:
         return x
@@ -44,7 +38,8 @@ class LinearFunction(function.Function):
         W = inputs[1]
 
         xp = cuda.get_array_module(*x)
-        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)
+        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=True)
+        #print('Wbf',W)
 
         olen, ilen = W.shape
         if self.coeffs is None:
@@ -72,7 +67,8 @@ class LinearFunction(function.Function):
         W = inputs[1]
         
         xp = cuda.get_array_module(*x)
-        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)
+        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=True)
+        #print('Waf',W)
 
         W = self.M * W
         gy = grad_outputs[0]

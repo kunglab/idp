@@ -38,9 +38,10 @@ class LinearFunction(function.Function):
         W = inputs[1]
 
         xp = cuda.get_array_module(*x)
-        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)        
-        #print('Wbf',W)
-
+        
+        # deterministic
+        W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False) 
+        
         olen, ilen = W.shape
         if self.coeffs is None:
             self.coeffs = numpy.ones(ilen)
@@ -69,9 +70,10 @@ class LinearFunction(function.Function):
         W = inputs[1]
         
         xp = cuda.get_array_module(*x)
-        #print('Waf',W)
-
+        
+        # deterministic
         W = xp.where(W>=0, 1, -1).astype(numpy.float32, copy=False)
+        
         W = self.M * W
         gy = grad_outputs[0]
 

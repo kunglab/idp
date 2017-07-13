@@ -8,7 +8,7 @@ from chainer import reporter
 
 from idp.binary.links_convolution_2d import IncompleteBinaryConvolution2D
 from idp.binary.links_linear import IncompleteBinaryLinear
-from idp.binary.bst import mbst_bp, bst
+from idp.binary.bst import mbst_bp, bst, sbst
 from idp.coeffs_generator import uniform_seq
 import util
 
@@ -59,7 +59,7 @@ class Block(chainer.Chain):
 
 
 class BinaryConvNet(chainer.Chain):
-    def __init__(self, class_labels, coeff_generator, act='ternary'):
+    def __init__(self, class_labels, coeff_generator, act='binary'):
         super(BinaryConvNet, self).__init__()
         self.coeff_generator = coeff_generator
         self.act = act

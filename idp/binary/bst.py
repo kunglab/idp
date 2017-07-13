@@ -4,7 +4,7 @@ from chainer import cuda
 from chainer.cuda import cupy
 from chainer import function
 from chainer.utils import type_check
-
+from chainer import functions as F
 
 class BST(function.Function):
     """Binary with Straight Thourgh estimator Unit."""
@@ -29,6 +29,53 @@ class BST(function.Function):
             'T x', 'T y',
             'y = x >= 0 ? 1 : -1', 'bst_fwd')(
                 x[0])
+        return y,
+
+    def backward_cpu(self, x, gy):
+        gx = gy[0].copy()
+        zero_indices = numpy.abs(x[0]) > 1
+        gx[zero_indices] = 0
+        return gx,
+
+    def backward_gpu(self, x, gy):
+        gx = cuda.elementwise(
+            'T x, T gy', 'T gx',
+            'gx = abs(x) > 1 ? 0 : gy', 'bst_bwd')(
+                x[0], gy[0])
+        return gx,
+    
+class SBST(function.Function):
+    """Stochastic Binary with Straight Thourgh estimator Unit."""
+    def __init__(self):
+        pass
+
+    def check_type_forward(self, in_types):
+        type_check.expect(in_types.size() == 1)
+        x_type, = in_types
+
+        type_check.expect(
+            x_type.dtype == numpy.float32,
+        )
+
+    def forward_cpu(self, x):
+        xp = cuda.get_array_module(*x)
+        
+        y = x[0]
+        
+        p = F.hard_sigmoid(y)
+        ys = xp.random.choice([1,0],numpy.prod(y.shape),p=[p,1-p]).reshape(y.shape)        
+        y = numpy.where(ys>0, 1, -1).astype(numpy.float32, copy=False)
+        return y,
+
+    def forward_gpu(self, x):
+        xp = cuda.get_array_module(*x)
+        y = x[0]
+        p = F.hard_sigmoid(y)
+        ys = xp.random.choice([1,0],numpy.prod(y.shape),p=[p,1-p]).reshape(y.shape)        
+        y = cuda.elementwise(
+            'T x', 'T y',
+            'y = x > 0 ? 1 : -1', 'bst_fwd')(
+                ys)
         return y,
 
     def backward_cpu(self, x, gy):
@@ -173,3 +220,6 @@ def zbst(x):
 
 def bst(x):
     return BST()(x)
+
+def sbst(x):
+    return SBST()(x)

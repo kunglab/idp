@@ -1,4 +1,4 @@
-import mlp
+import mlp_coef_comparison
 import util
 
 if __name__ == '__main__':
@@ -9,4 +9,5 @@ if __name__ == '__main__':
     args.epoch = 50
     args.batchsize = 128
     args.dataset = 'mnist'
-    mlp.run(args)
+    args.ext = 'pdf'
+    mlp_coef_comparison.run(args)

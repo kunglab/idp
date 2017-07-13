@@ -4,6 +4,18 @@ from collections import namedtuple
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
+SMALL_SIZE = 14
+MEDIUM_SIZE = 17
+BIGGER_SIZE = 19
+
+plt.rc('font', size=SMALL_SIZE)          # controls default text sizes
+plt.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+plt.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+plt.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+
 import numpy as np
 
 dash_list = [(1e10, 1), (5, 2), (2, 5), (4, 10), (3, 3, 2, 2), (5, 2, 20, 2)]
@@ -26,15 +38,16 @@ colors = ModelTypes(
 
 
 def plot(xd, yd, keys, filename, colors, folder='figures/', ext='png',
-         marker='o', xlabel=None, ylabel=None, xlim=None, ylim=None, title=None, linewidth=2):
+         marker='o', xlabel=None, ylabel=None, xlim=None, ylim=None, xticks=None,
+         yticks=None, title=None, linewidth=3.5, ms=5, legend_loc=0):
     if not os.path.exists(folder):
         os.makedirs(folder)
     for i, key in enumerate(keys):
         if i == 0:
-            plt.plot(xd[key], yd[key], label=key, ms=4,
+            plt.plot(xd[key], yd[key], label=key, ms=ms,
                      marker=marker, color=colors[i], linewidth=linewidth)
         else:
-            plt.plot(xd[key], yd[key], label=key, ms=4, marker=marker,
+            plt.plot(xd[key], yd[key], label=key, ms=ms, marker=marker,
                      color=colors[i], linestyle='--', dashes=dash_list[i], linewidth=linewidth)
 
     if xlabel:
@@ -45,12 +58,15 @@ def plot(xd, yd, keys, filename, colors, folder='figures/', ext='png',
         plt.xlim(xlim)
     if ylim:
         plt.ylim(ylim)
+    if xticks:
+        plt.xticks(xticks)
+    if yticks:
+        plt.yticks(yticks)
     if title:
         plt.title(title)
-    plt.legend(loc=0, handlelength=3)
+    plt.legend(loc=legend_loc, handlelength=3)
     plt.tight_layout()
     plt.grid()
     full_file = '{}{}.{}'.format(folder, filename, ext)
-    print(full_file)
     plt.savefig(full_file, dpi=300)
     plt.clf()

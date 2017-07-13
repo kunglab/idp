@@ -98,7 +98,7 @@ def get_idp_acc(model, dataset_tuple, comp_ratio, batchsize=1024, gpu=0):
 def sweep_idp(model, dataset, comp_ratios, args):
     accs = []
     for cr in comp_ratios:
-        accs.append(get_idp_acc(model, dataset, comp_ratio=cr, 
+        accs.append(get_idp_acc(model, dataset, comp_ratio=cr,
                                 batchsize=args.batchsize, gpu=args.gpu))
     return accs
 
@@ -110,11 +110,15 @@ def train_model(model, train, test, args):
         model.to_gpu()
 
     xp = np if args.gpu < 0 else cuda.cupy
-    # opt = chainer.optimizers.MomentumSGD(args.learnrate)
-    opt = chainer.optimizers.MomentumSGD(args.learnrate)
-    opt.setup(model)
-    opt.add_hook(chainer.optimizer.WeightDecay(5e-4))
-    
+    if args.opt == 'momentum':
+        opt = chainer.optimizers.MomentumSGD(args.learnrate)
+        opt.setup(model)
+        opt.add_hook(chainer.optimizer.WeightDecay(5e-4))
+    elif args.opt == 'adam':
+        opt = optimizers.Adam(args.learnrate)
+        opt.setup(model)
+    else:
+        raise NameError('Invalid opt: {}'.format(args.opt))
     if hasattr(args,'clip'):
         opt.add_hook(weight_clip.WeightClip(-args.clip, args.clip))
 
@@ -124,8 +128,9 @@ def train_model(model, train, test, args):
     updater = training.StandardUpdater(train_iter, opt, device=args.gpu)
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
     trainer.extend(extensions.Evaluator(test_iter, model, device=args.gpu))
-    trainer.extend(extensions.ExponentialShift('lr', 0.5),
-                   trigger=(25, 'epoch'))
+    if args.opt == 'momentum':
+        trainer.extend(extensions.ExponentialShift('lr', 0.5),
+                       trigger=(25, 'epoch'))
     trainer.extend(extensions.LogReport())
     trainer.extend(extensions.PrintReport(
         ['epoch', 'main/loss', 'validation/main/loss'] +
@@ -158,7 +163,6 @@ def load_model(model, folder, gpu=0):
 def load_or_train_model(model, train, test, args):
     name = model.param_names()
     model_folder = os.path.join(args.model_path, name)
-    print(model_folder)
     if not os.path.exists(model_folder) or args.overwrite_models:
         train_model(model, train, test, args)
     else:
@@ -200,6 +204,8 @@ def default_parser(description=''):
                         help='Directory to output the result')
     parser.add_argument('--learnrate', '-l', type=float, default=0.05,
                         help='Learning rate for SGD')
+    parser.add_argument('--opt',  default='momentum',
+                        choices=['momentum', 'adam'], help='optimizer')
     parser.add_argument('--model_path',  default='_models/',
                         help='Directory to store the models (for later use)')
     parser.add_argument('--figure_path',  default='_figures/',

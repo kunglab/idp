@@ -41,9 +41,6 @@ class Block(chainer.Chain):
             self.bn2 = L.BatchNormalization(out_channels)
 
     def __call__(self, x, comp_ratio=None):
-        # if comp_ratio == None:
-        #     comp_ratio = 1 - util.gen_prob('sexp')
-
         def coeff_f(n):
             return util.zero_end(self.coeff_generator(n), comp_ratio)
 
@@ -63,17 +60,19 @@ class BinaryConvNet(chainer.Chain):
         super(BinaryConvNet, self).__init__()
         self.coeff_generator = coeff_generator
         self.act = act
-        g = coeff_generator
         with self.init_scope():
-            self.l1 = Block(1, 32, 3, g, act, input_layer=True)
-            self.l2 = Block(32, 64, 3, g, act)
-            self.l3 = Block(64, 64, 3, g, act)
-            self.l4 = IncompleteBinaryLinear(None,class_labels)
+            self.l1 = Block(1, 8, 3, coeff_generator, act, input_layer=True)
+            self.l2 = Block(8, 32, 3, uniform_seq, act)
+            self.l3 = Block(32, 64, 3, uniform_seq, act)
+            self.l4 = IncompleteBinaryLinear(None, class_labels)
 
     def __call__(self, x, t, ret_param='loss', comp_ratio=None):
+        # device
         h = self.l1(x, comp_ratio)
-        h = self.l2(h, comp_ratio)
-        h = self.l3(h, comp_ratio)
+
+        # cloud
+        h = self.l2(h, 1.0)
+        h = self.l3(h, 1.0)
         h = self.l4(h, 1.0)
 
         report = {

@@ -47,28 +47,27 @@ class MobileNet(chainer.Chain):
     def __init__(self, class_labels, coeffs_generator):
         super(MobileNet, self).__init__()
         self.coeffs_generator = coeffs_generator
-        f1, f2, f3, f4 = 32, 64, 128, 256
+        f1, f2, f3 = 64, 128, 256
 
         with self.init_scope():
             self.c0 = IncompleteConvolution2D(f1, 3, pad=1, stride=1)
             self.bn0 = L.BatchNormalization(f1)
-            self.d1 = Block(f1, f2, coeffs_generator, stride=1)
-            self.d2 = Block(f2, f3, coeffs_generator, stride=2)
-            self.d3 = Block(f3, f3, coeffs_generator, stride=1)
-            self.d4 = Block(f3, f3, coeffs_generator, stride=2)
-            self.d5 = Block(f3, f4, coeffs_generator, stride=1)
+            self.d1 = Block(f1, f1, coeffs_generator, stride=1)
+            self.d2 = Block(f1, f2, coeffs_generator, stride=2)
+            self.d3 = Block(f2, f2, coeffs_generator, stride=1)
+            self.d4 = Block(f2, f3, coeffs_generator, stride=2)
+            self.d5 = Block(f3, f3, coeffs_generator, stride=1)
+            self.d6 = Block(f3, f3, coeffs_generator, stride=1)
             self.l1 = IncompleteLinear(class_labels)
 
     def __call__(self, x, t, ret_param='loss', comp_ratio=None):
-        def coeff_f(n):
-            return util.zero_end(self.coeffs_generator(n), comp_ratio)
-
         h = F.relu(self.bn0(self.c0(x)))
         h = self.d1(h, comp_ratio)
         h = self.d2(h, comp_ratio)
         h = self.d3(h, comp_ratio)
         h = self.d4(h, comp_ratio)
         h = self.d5(h, comp_ratio)
+        h = self.d6(h, comp_ratio)
         h = self.l1(h)
 
         report = {

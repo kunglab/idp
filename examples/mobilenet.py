@@ -4,18 +4,19 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
 import visualize as vz
-from idp.coeffs_generator import uniform_seq, linear_seq, harmonic_seq
+from idp.coeffs_generator import uniform_seq, linear_seq, harmonic_seq, exp_seq
 from net import MobileNet
 import util
 
 
 def run(args):
     train, test = util.get_dataset(args.dataset)
-    names = ['all-one (standard)', 'linear']
-    colors = [vz.colors.all_one_lg, vz.colors.linear_lg]
+    names = ['all-one (standard)', 'linear', 'harmonic']
+    colors = [vz.colors.all_one_lg, vz.colors.linear_lg, vz.colors.exp_lg]
     models = [
         MobileNet.MobileNet(10, uniform_seq),
-        MobileNet.MobileNet(10, linear_seq)
+        MobileNet.MobileNet(10, linear_seq),
+        MobileNet.MobileNet(10, exp_seq)
     ]
     comp_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     acc_dict = {}

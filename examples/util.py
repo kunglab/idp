@@ -19,7 +19,7 @@ import numpy as np
 from chainer import cuda
 from chainer import function
 from chainer.utils import type_check
-
+from idp.binary import weight_clip
 
 def zero_end(coefs, coef_ratio):
     if coef_ratio is None:
@@ -86,6 +86,8 @@ def train_model(model, train, test, args):
         opt.setup(model)
     else:
         raise NameError('Invalid opt: {}'.format(args.opt))
+    if hasattr(args,'clip'):
+        opt.add_hook(weight_clip.WeightClip(-args.clip, args.clip))
 
     train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
     test_iter = chainer.iterators.SerialIterator(test, args.batchsize,

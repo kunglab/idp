@@ -9,4 +9,5 @@ if __name__ == '__main__':
     args.epoch = 50
     args.batchsize = 128
     args.dataset = 'mnist'
+    args.ext = 'pdf'
     mlp.run(args)

@@ -3,21 +3,26 @@ import sys
 sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
+import numpy as np
+
 import visualize as vz
 from net import VGG
 import util
-from idp.coeffs_generator import uniform_seq, linear_seq, harmonic_seq
+import idp.coeffs_generator as cg
 
 
 def run(args):
     train, test = util.get_dataset(args.dataset)
-    names = ['all-one (standard)', 'linear']
-    colors = [vz.colors.all_one_lg, vz.colors.linear_lg]
+    names = ['all-ones,exp', 'all-ones,all', 'linear,exp', 'linear,all']
+    colors = [vz.colors.all_one_lg, vz.colors.all_one_sm,
+              vz.colors.linear_lg, vz.colors.linear_sm]
     models = [
-        VGG.VGG(10, uniform_seq),
-        VGG.VGG(10, linear_seq)
+        VGG.VGG(10, cg.uniform, 'slow_exp'),
+        VGG.VGG(10, cg.uniform, 'all'),
+        VGG.VGG(10, cg.linear, 'slow_exp'),
+        VGG.VGG(10, cg.linear, 'all'),
     ]
-    comp_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+    comp_ratios = np.linspace(0.5, 1.0, 20)
     acc_dict = {}
     ratios_dict = {}
     for name, model in zip(names, models):

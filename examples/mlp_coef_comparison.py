@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..')))
 
 import visualize as vz
-from idp.coeffs_generator import uniform_seq, harmonic_seq, linear_seq, exp_seq, uniform_exp_seq
+import idp.coeffs_generator as cg
 from net import MLP
 import util
 
@@ -16,11 +16,11 @@ def run(args):
     colors = [vz.colors.all_one_lg, vz.colors.harmonic_lg,
               vz.colors.linear_lg, vz.colors.exp_lg, vz.colors.half_one_lg]
     models = [
-        MLP.MLP(10, uniform_seq),
-        MLP.MLP(10, harmonic_seq),
-        MLP.MLP(10, linear_seq),
-        MLP.MLP(10, exp_seq),
-        MLP.MLP(10, uniform_exp_seq),
+        MLP.MLP(10, cg.uniform),
+        MLP.MLP(10, cg.harmonic),
+        MLP.MLP(10, cg.lienar),
+        MLP.MLP(10, cg.exp),
+        MLP.MLP(10, cg.uniform_exp),
     ]
     comp_ratios = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     acc_dict = {}

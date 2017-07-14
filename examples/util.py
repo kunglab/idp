@@ -29,42 +29,8 @@ def zero_end(coefs, coef_ratio):
     return coefs
 
 
-def gen_prob(dist):
-    if dist == 'exp':
-        return exp_prob(w=0.25)
-    if dist == 'sexp':
-        return exp_prob(w=0.05)
-    if dist == 'mid_exp':
-        return min(1.0, 0.3 + exp_prob(w=0.025))
-    if dist == '0':
-        return 0.0
-    if dist == '50':
-        return 0.5
-    if dist == '90':
-        return 0.9
-    if dist == 'linear':
-        return linear_prob()
-    if dist == 'id':
-        return 0
-    else:
-        raise NameError('dist: {}'.format(dist))
-
-
-def exp_prob(w=0.16666):
-    while True:
-        do = np.random.exponential(w)
-        if do <= 1.0:
-            break
-    return do
-
-
-def linear_prob(w=10):
-    w += 1
-    weights = np.linspace(0, 1, w) / np.sum(np.linspace(0, 1, w))
-    return 1 - np.random.choice(range(w), p=weights) / float(w)
-
-
 def get_acc(model, dataset_tuple, ret_param='acc', batchsize=1024, gpu=0):
+    chainer.config.train = False
     xp = np if gpu < 0 else cuda.cupy
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     accs = 0
@@ -80,6 +46,7 @@ def get_acc(model, dataset_tuple, ret_param='acc', batchsize=1024, gpu=0):
 
 
 def get_idp_acc(model, dataset_tuple, comp_ratio, batchsize=1024, gpu=0):
+    chainer.config.train = False
     xp = np if gpu < 0 else cuda.cupy
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     accs = 0
@@ -155,6 +122,7 @@ def load_model(model, folder, gpu=0):
     load_hdf5(os.path.join(folder, 'model.hdf5'), model)
     if gpu >= 0:
         model = model.to_gpu(gpu)
+
     return model
 
 

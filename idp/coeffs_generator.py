@@ -1,26 +1,26 @@
 import numpy
 
 
-def uniform_seq(n):
+def uniform(n):
     return [1 for i in range(n)]
 
 
-def harmonic_seq(n, k=1):
+def harmonic(n, k=1):
     return [1. * k / i for i in range(1, n + 1)]
 
 
-def linear_seq(n, k=1):
+def linear(n, k=1):
     return [1. - (i * 1. * k / n) for i in range(n)]
 
 
-def exp_seq(n, k=1):
+def exp(n, k=1):
     return [numpy.exp(-k * i) for i in range(n)]
 
 
-def uniform_exp_seq(n, k=1):
+def uniform_exp(n, k=1):
     n_half = n // 2
     n_rest = n - n // 2
-    return uniform_seq(n_half) + exp_seq(n_rest, k)
+    return uniform(n_half) + exp(n_rest, k)
 
 
 def step(n, steps=[1]):

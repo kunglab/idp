@@ -9,18 +9,20 @@ from chainer import reporter
 from idp.binary.links_convolution_2d import IncompleteBinaryConvolution2D
 from idp.binary.links_linear import IncompleteBinaryLinear
 from idp.binary.bst import mbst_bp, bst
-from idp.coeffs_generator import uniform_seq
+import idp.coeffs_generator as cg
+from idp.blackout_generator import gen_blackout
 import util
 
 
 class Block(chainer.Chain):
     def __init__(self, in_channels, out_channels, ksize, coeff_generator,
-                 act, input_layer=False, pksize=2):
+                 bo_generator, act, input_layer=False, pksize=2):
         super(Block, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.ksize = ksize
         self.coeff_generator = coeff_generator
+        self.bo_generator = bo_generator
         self.act = act
         self.input_layer = input_layer
         self.pksize = pksize
@@ -41,6 +43,9 @@ class Block(chainer.Chain):
             self.bn2 = L.BatchNormalization(out_channels)
 
     def __call__(self, x, comp_ratio=None):
+        if comp_ratio == None:
+            comp_ratio = 1 - gen_blackout(self.bo_generator)
+
         def coeff_f(n):
             return util.zero_end(self.coeff_generator(n), comp_ratio)
 
@@ -56,14 +61,16 @@ class Block(chainer.Chain):
 
 
 class BinaryConvNet(chainer.Chain):
-    def __init__(self, class_labels, coeff_generator, act='ternary'):
+    def __init__(self, class_labels, coeff_generator, bo_generator, act='ternary'):
         super(BinaryConvNet, self).__init__()
         self.coeff_generator = coeff_generator
+        self.bo_generator = bo_generator
         self.act = act
         with self.init_scope():
-            self.l1 = Block(1, 8, 3, coeff_generator, act, input_layer=True)
-            self.l2 = Block(8, 32, 3, uniform_seq, act)
-            self.l3 = Block(32, 64, 3, uniform_seq, act)
+            self.l1 = Block(1, 8, 3, coeff_generator, bo_generator,
+                            act, input_layer=True)
+            self.l2 = Block(8, 32, 3, cg.uniform, bo_generator, act)
+            self.l3 = Block(32, 64, 3, cg.uniform, bo_generator, act)
             self.l4 = IncompleteBinaryLinear(None, class_labels)
 
     def __call__(self, x, t, ret_param='loss', comp_ratio=None):

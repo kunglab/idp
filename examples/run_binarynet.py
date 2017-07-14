@@ -7,7 +7,7 @@ if __name__ == '__main__':
     '''
     args = util.default_parser().parse_args()
     args.epoch = 50
-    args.batchsize = 128
+    args.batchsize = 256
     args.opt = 'adam'
     args.learnrate = 0.003
     args.dataset = 'mnist'

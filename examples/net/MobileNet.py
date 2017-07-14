@@ -11,15 +11,17 @@ from chainer import reporter
 from idp.links_convolution_2d import IncompleteConvolution2D
 from idp.links_depthwise_convolution_2d import IncompleteDepthwiseConvolution2D
 from idp.links_linear import IncompleteLinear
+from idp.blackout_generator import gen_blackout
 import util
 
 
 class Block(chainer.Chain):
-    def __init__(self, in_chan, num_f, coeffs_generator, stride=1):
+    def __init__(self, in_chan, num_f, coeffs_generator, bo_generator, stride=1):
         super(Block, self).__init__()
         self.in_chan = in_chan
         self.num_f = num_f
         self.coeffs_generator = coeffs_generator
+        self.bo_generator = bo_generator
         with self.init_scope():
             self.dc = IncompleteDepthwiseConvolution2D(
                 self.in_chan, 1, 3, pad=1, stride=stride)
@@ -29,12 +31,12 @@ class Block(chainer.Chain):
 
     def __call__(self, x, comp_ratio=None):
         if comp_ratio == None:
-            comp_ratio = 1 - util.gen_prob('sexp')
+            comp_ratio = 1 - gen_blackout(self.bo_generator)
 
         def coeff_f(n):
             return util.zero_end(self.coeffs_generator(n), comp_ratio)
 
-        h = self.dc(x, coeff_f(self.in_chan))
+        h = self.dc(x, 1.0)
         h = self.bn1(h)
         h = F.relu(h)
         h = self.pc(h, coeff_f(self.in_chan))
@@ -44,20 +46,21 @@ class Block(chainer.Chain):
 
 
 class MobileNet(chainer.Chain):
-    def __init__(self, class_labels, coeffs_generator):
+    def __init__(self, class_labels, coeffs_generator, bo_generator):
         super(MobileNet, self).__init__()
         self.coeffs_generator = coeffs_generator
+        self.bo_generator = bo_generator
         f1, f2, f3 = 64, 128, 256
 
         with self.init_scope():
             self.c0 = IncompleteConvolution2D(f1, 3, pad=1, stride=1)
             self.bn0 = L.BatchNormalization(f1)
-            self.d1 = Block(f1, f1, coeffs_generator, stride=1)
-            self.d2 = Block(f1, f2, coeffs_generator, stride=2)
-            self.d3 = Block(f2, f2, coeffs_generator, stride=1)
-            self.d4 = Block(f2, f3, coeffs_generator, stride=2)
-            self.d5 = Block(f3, f3, coeffs_generator, stride=1)
-            self.d6 = Block(f3, f3, coeffs_generator, stride=1)
+            self.d1 = Block(f1, f1, coeffs_generator, bo_generator, stride=1)
+            self.d2 = Block(f1, f2, coeffs_generator, bo_generator, stride=2)
+            self.d3 = Block(f2, f2, coeffs_generator, bo_generator, stride=1)
+            self.d4 = Block(f2, f3, coeffs_generator, bo_generator, stride=2)
+            self.d5 = Block(f3, f3, coeffs_generator, bo_generator, stride=1)
+            self.d6 = Block(f3, f3, coeffs_generator, bo_generator, stride=1)
             self.l1 = IncompleteLinear(class_labels)
 
     def __call__(self, x, t, ret_param='loss', comp_ratio=None):
@@ -82,4 +85,4 @@ class MobileNet(chainer.Chain):
         return ['validation/main/acc']
 
     def param_names(self):
-        return 'MobileNet_{}'.format(self.coeffs_generator.__name__)
+        return 'MobileNet_{}_{}'.format(self.coeffs_generator.__name__, self.bo_generator)

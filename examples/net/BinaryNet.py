@@ -94,4 +94,4 @@ class BinaryConvNet(chainer.Chain):
         return ['validation/main/acc']
 
     def param_names(self):
-        return 'BinaryNet_{}'.format(self.coeff_generator.__name__)
+        return 'BinaryNet_{}_{}'.format(self.coeff_generator.__name__, self.bo_generator)

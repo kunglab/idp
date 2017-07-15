@@ -13,14 +13,13 @@ import util
 
 def run(args):
     train, test = util.get_dataset(args.dataset)
-    names = ['all-ones,exp', 'all-ones,all', 'linear,exp', 'linear,all']
-    colors = [vz.colors.all_one_lg, vz.colors.all_one_sm,
-              vz.colors.linear_lg, vz.colors.linear_sm]
+    names = ['all-ones (standard)', 'linear']
+    colors = [vz.colors.all_one_lg, vz.colors.linear_lg]
     models = [
-        MobileNet.MobileNet(10, cg.uniform, 'slow_exp'),
+        # MobileNet.MobileNet(10, cg.uniform, 'slow_exp'),
         MobileNet.MobileNet(10, cg.uniform, 'all'),
         MobileNet.MobileNet(10, cg.linear, 'slow_exp'),
-        MobileNet.MobileNet(10, cg.linear, 'all'),
+        # MobileNet.MobileNet(10, cg.linear, 'all'),
     ]
 
     comp_ratios = np.linspace(.5, 1, 20)

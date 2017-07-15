@@ -13,14 +13,14 @@ import util
 
 def run(args):
     train, test = util.get_dataset(args.dataset)
-    names = ['all-ones,exp', 'all-ones,all', 'linear,exp', 'linear,all']
-    colors = [vz.colors.all_one_lg, vz.colors.all_one_sm,
-              vz.colors.linear_lg, vz.colors.linear_sm]
+    # names = ['all-ones,exp', 'all-ones,all', 'linear,exp', 'linear,all']
+    names = ['all-ones (standard)', 'linear']
+    colors = [vz.colors.all_one_lg, vz.colors.linear_lg]
     models = [
-        MLP.MLP(10, cg.uniform, 'slow_exp'),
+        # MLP.MLP(10, cg.uniform, 'slow_exp'),
         MLP.MLP(10, cg.uniform, 'all'),
         MLP.MLP(10, cg.linear, 'slow_exp'),
-        MLP.MLP(10, cg.linear, 'all'),
+        # MLP.MLP(10, cg.linear, 'all'),
     ]
     comp_ratios = np.linspace(0.1, 1, 30)
     acc_dict = {}

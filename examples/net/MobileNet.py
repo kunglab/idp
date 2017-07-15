@@ -36,7 +36,7 @@ class Block(chainer.Chain):
         def coeff_f(n):
             return util.zero_end(self.coeffs_generator(n), comp_ratio)
 
-        h = self.dc(x, 1.0)
+        h = self.dc(x, coeff_f(self.in_chan))
         h = self.bn1(h)
         h = F.relu(h)
         h = self.pc(h, coeff_f(self.in_chan))

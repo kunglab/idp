@@ -82,7 +82,7 @@ def train_model_profiles(model, train, test, args):
     # init the params for each profiles
     for profile in model.profiles():
          get_idp_acc(model, train, 1.0, profile=profile)
-
+    
     # train each model
     for profile in model.profiles():
         model.profile = profile
@@ -103,7 +103,7 @@ def train_model(model, train, test, args):
     elif args.opt == 'momentum':
         opt = chainer.optimizers.MomentumSGD(args.learnrate)
         opt.setup(model)
-        opt.add_hook(chainer.optimizer.WeightDecay(5e-4))
+        #opt.add_hook(chainer.optimizer.WeightDecay(5e-4))
     elif args.opt == 'adam':
         opt = optimizers.Adam(args.learnrate)
         opt.setup(model)

@@ -91,7 +91,7 @@ class LinearFunction(function.Function):
         
         if hasattr(self,'mW'):
             gW = self.mW * gW
-        # print(gW.sum(0).sum(0))
+        # print('gW',gW.sum(0).sum(0))
         if len(inputs) == 3:
             gb = gy.sum(0)
             if hasattr(self,'mb'):

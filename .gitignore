@@ -104,3 +104,7 @@ _result*
 figures
 *.ipynb
 result
+
+_model*
+_output*
+_figure*

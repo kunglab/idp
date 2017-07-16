@@ -21,8 +21,8 @@ class MLP(chainer.Chain):
         self.n_units = n_units
         self.profile = 0
         with self.init_scope():
-            self.p0_l1 = L.Linear(None,self.n_units)
-            self.p1_l1 = L.Linear(None,self.n_units)
+            self.p0_l1 = IncompleteLinear(None,self.n_units)
+            self.p1_l1 = IncompleteLinear(None,self.n_units)
             self.l2 = IncompleteLinear(self.n_units,self.n_units)
             self.p0_l3 = L.Linear(None,class_labels)
             self.p1_l3 = L.Linear(None,class_labels)
@@ -36,15 +36,22 @@ class MLP(chainer.Chain):
 
         if profile == 0:
             h = F.relu(self.p0_l1(x))
-            #print('b',self.l2.W.data)
+            #h = self.p0_l1(x, coeff_f(784),
+            #            cg.step(784, steps=[1, 1]),
+            #            cg.step(self.n_units, steps=[1, 0]))
+            #h = F.relu(h)
+            # print('b',self.l2.W.data)
             h = self.l2(h, coeff_f(self.n_units),
-                        cg.step(self.n_units, steps=[0, 0]),
-                        cg.step(self.n_units, steps=[0, 0]))
-            #print('a',self.l2.W.data)
+                        cg.step(self.n_units, steps=[1, 0]),
+                        cg.step(self.n_units, steps=[1, 0]))
             h = F.relu(h)
             h = self.p0_l3(h)
         elif profile == 1:
             h = F.relu(self.p1_l1(x))
+            #h = self.p0_l1(x, coeff_f(784),
+            #            cg.step(784, steps=[1, 1]),
+            #            cg.step(self.n_units, steps=[0, 1]))
+            #h = F.relu(h)
             h = self.l2(h, coeff_f(self.n_units),
                         cg.step(self.n_units, steps=[0, 1]),
                         cg.step(self.n_units, steps=[0, 1]))

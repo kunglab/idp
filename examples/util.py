@@ -73,6 +73,15 @@ def sweep_idp(model, dataset, comp_ratios, args, profile=0):
 
 
 def train_model_profiles(model, train, test, args):
+    if args.gpu >= 0:
+        cuda.get_device(args.gpu).use()
+        model.to_gpu()
+
+    # init the params for each profiles
+    for profile in model.profiles():
+         get_idp_acc(model, train, 1.0, profile=profile)
+
+    # train each model
     for profile in model.profiles():
         model.profile = profile
         train_model(model, train, test, args)

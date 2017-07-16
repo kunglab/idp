@@ -14,8 +14,8 @@ import util
 def run(args):
     train, test = util.get_dataset(args.dataset)
     # names = ['all-ones,exp', 'all-ones,all', 'linear,exp', 'linear,all']
-    names = ['uniform']
-    colors = [vz.colors.all_one_lg]
+    names = ['linear']
+    colors = [vz.colors.all_one_lg, vz.colors.all_one_sm]
     models = [
         # MLP.MLP(10, two_step, 'all'),
         MLP.MLP(10, cg.uniform),
@@ -28,21 +28,23 @@ def run(args):
     comp_ratios = np.linspace(0.1, 1, 20)
     acc_dict = {}
     ratios_dict = {}
+    key_names = []
     for name, model in zip(names, models):
         util.train_model_profiles(model, train, test, args)
         for profile in model.profiles():
             key = name + '_' + str(profile)
+            key_names.append(key)
             acc_dict[key] = util.sweep_idp(
                 model, test, comp_ratios, args, profile=profile)
-        ratios_dict[key] = [100. * cr for cr in comp_ratios]
+            ratios_dict[key] = [100. * cr for cr in comp_ratios]
 
     filename = "MLP_{}".format(args.dataset)
-    vz.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+    vz.plot(ratios_dict, acc_dict, key_names, filename, colors=colors,
             folder=args.figure_path, ext=args.ext,
             xlabel='Dot Product Component (%)',
             ylabel='Classification Accuracy (%)',
-            title='MLP (MNIST)',
-            ylim=(90, 100))
+            title='MLP (MNIST)')
+            
 
 
 if __name__ == '__main__':

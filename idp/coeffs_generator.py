@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 
 
 def uniform(n):
@@ -14,7 +14,7 @@ def linear(n, k=1):
 
 
 def exp(n, k=1):
-    return [numpy.exp(-k * i) for i in range(n)]
+    return [np.exp(-k * i) for i in range(n)]
 
 
 def uniform_exp(n, k=1):
@@ -28,6 +28,15 @@ def step(n, steps=[1]):
     i = 0
     coeffs = []
     for step in steps:
-        coeffs.extend([step for j in range(int(round(1. * n / num)))])
+        coeffs.extend([step for j in range(int(np.ceil(1. * n / num)))])
         i = i + 1
     return coeffs[:n]
+
+def three_steps(n):
+    return step(n, steps=[1, 0.5, 0.25])
+
+def four_steps(n):
+    return step(n, steps=[1, 0.5, 0.25, 0.0])
+
+def mag_steps(n):
+    return step(n, steps=[1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5])

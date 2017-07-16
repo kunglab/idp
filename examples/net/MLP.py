@@ -15,26 +15,39 @@ import util
 
 
 class MLP(chainer.Chain):
-    def __init__(self, class_labels, coeff_generator, bo_generator, n_units=100):
+    def __init__(self, class_labels, coeff_generator, n_units=100):
         super(MLP, self).__init__()
         self.coeff_generator = coeff_generator
-        self.bo_generator = bo_generator
         self.n_units = n_units
+        self.profile = 0
         with self.init_scope():
-            self.l1 = L.Linear(self.n_units)
+            self.p0_l1 = L.Linear(self.n_units)
+            self.p1_l1 = L.Linear(self.n_units)
             self.l2 = IncompleteLinear(self.n_units)
-            self.l3 = L.Linear(class_labels)
+            self.p0_l3 = L.Linear(class_labels)
+            self.p1_l3 = L.Linear(class_labels)
 
-    def __call__(self, x, t, ret_param='loss', comp_ratio=None):
-        if comp_ratio == None:
-            comp_ratio = 1 - gen_blackout(self.bo_generator)
+    def __call__(self, x, t, ret_param='loss', profile=None, comp_ratio=None):
+        if profile == None:
+            profile = self.profile
 
         def coeff_f(n):
             return util.zero_end(self.coeff_generator(n), comp_ratio)
 
-        h = F.relu(self.l1(x))
-        h = F.relu(self.l2(h, coeff_f(self.n_units)))
-        h = self.l3(h)
+        if profile == 0:
+            h = F.relu(self.p0_l1(x))
+            h = self.l2(h, coeff_f(self.n_units),
+                        cg.step(self.n_units, steps=[1, 0]))
+            h = F.relu(h)
+            h = self.p0_l3(h)
+        elif profile == 1:
+            h = F.relu(self.p1_l1(x))
+            h = self.l2(h, coeff_f(self.n_units),
+                        cg.step(self.n_units, steps=[0, 1]))
+            h = F.relu(h)
+            h = self.p1_l3(h)
+        else:
+            raise ValueError('profile: {}'.format(profile))
 
         report = {
             'loss': F.softmax_cross_entropy(h, t),
@@ -44,9 +57,11 @@ class MLP(chainer.Chain):
         reporter.report(report, self)
         return report[ret_param]
 
+    def profiles(self):
+        return [0, 1]
+
     def report_params(self):
         return ['validation/main/acc']
 
     def param_names(self):
-        return 'MLP_{}_{}_{}'.format(self.n_units, self.coeff_generator.__name__,
-                                     self.bo_generator)
+        return 'MLP_{}_{}'.format(self.n_units, self.coeff_generator.__name__)

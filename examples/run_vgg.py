@@ -9,5 +9,5 @@ if __name__ == '__main__':
     args.epoch = 70
     args.batchsize = 256
     args.dataset = 'cifar10'
-    args.ext = 'pdf'
+    # args.ext = 'pdf'
     vgg.run(args)

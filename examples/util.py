@@ -21,6 +21,7 @@ from chainer import function
 from chainer.utils import type_check
 from idp.binary import weight_clip
 
+
 def zero_end(coefs, coef_ratio):
     if coef_ratio is None:
         return np.array(coefs)
@@ -45,7 +46,7 @@ def get_acc(model, dataset_tuple, ret_param='acc', batchsize=1024, gpu=0):
     return (accs / len(x)) * 100.
 
 
-def get_idp_acc(model, dataset_tuple, comp_ratio, batchsize=1024, gpu=0):
+def get_idp_acc(model, dataset_tuple, comp_ratio, profile=0, batchsize=1024, gpu=0):
     chainer.config.train = False
     xp = np if gpu < 0 else cuda.cupy
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
@@ -55,19 +56,26 @@ def get_idp_acc(model, dataset_tuple, comp_ratio, batchsize=1024, gpu=0):
         x_batch = xp.array(x[i:i + batchsize])
         y_batch = xp.array(y[i:i + batchsize])
         acc_data = model(x_batch, y_batch, comp_ratio=comp_ratio,
-                         ret_param='acc')
+                         ret_param='acc', profile=profile)
         acc_data.to_cpu()
         acc = acc_data.data
         accs += acc * len(x_batch)
     return (accs / len(x)) * 100.
 
 
-def sweep_idp(model, dataset, comp_ratios, args):
+def sweep_idp(model, dataset, comp_ratios, args, profile=0):
     accs = []
     for cr in comp_ratios:
         accs.append(get_idp_acc(model, dataset, comp_ratio=cr,
-                                batchsize=args.batchsize, gpu=args.gpu))
+                                batchsize=args.batchsize, gpu=args.gpu,
+                                profile=profile))
     return accs
+
+
+def train_model_profiles(model, train, test, args):
+    for profile in model.profiles():
+        model.profile = profile
+        train_model(model, train, test, args)
 
 
 def train_model(model, train, test, args):
@@ -86,7 +94,7 @@ def train_model(model, train, test, args):
         opt.setup(model)
     else:
         raise NameError('Invalid opt: {}'.format(args.opt))
-    if hasattr(args,'clip'):
+    if hasattr(args, 'clip'):
         opt.add_hook(weight_clip.WeightClip(-args.clip, args.clip))
 
     train_iter = chainer.iterators.SerialIterator(train, args.batchsize)

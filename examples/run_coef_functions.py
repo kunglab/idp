@@ -11,10 +11,13 @@ import idp.coeffs_generator as cg
 
 
 args = util.default_parser('Generate Weight Functions').parse_args()
-funcs = [cg.uniform, cg.harmonic, cg.linear, cg.exp, cg.uniform_exp]
-names = ['all-one', 'harmonic', 'linear', 'exp', 'half_one']
-colors = [vz.colors.all_one_lg, vz.colors.harmonic_lg,
-          vz.colors.linear_lg, vz.colors.exp_lg, vz.colors.half_one_lg]
+# funcs = [cg.uniform, cg.harmonic, cg.linear, cg.exp, cg.uniform_exp]
+# names = ['all-one', 'harmonic', 'linear', 'exp', 'half_one']
+# colors = [vz.colors.all_one_lg, vz.colors.harmonic_lg,
+        #   vz.colors.linear_lg, vz.colors.exp_lg, vz.colors.half_one_lg]
+funcs = [cg.uniform, cg.four_steps, cg.mag_steps, cg.exp, cg.uniform_exp]
+names = ['all-one', 'four steps', 'magnitude steps']
+colors = [vz.colors.all_one_lg, vz.colors.linear_sm, vz.colors.linear_lg]
 xs = {}
 ys = {}
 n = 16

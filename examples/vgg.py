@@ -13,13 +13,14 @@ import idp.coeffs_generator as cg
 
 def run(args):
     train, test = util.get_dataset(args.dataset)
-    names = ['all-ones (standard)', 'linear']
-    colors = [vz.colors.all_one_lg, vz.colors.linear_lg]
+    names = ['all-ones (standard)', 'four steps', 'magnitude steps']
+    colors = [vz.colors.all_one_lg, vz.colors.linear_sm, vz.colors.linear_lg]
     models = [
         VGG.VGG(10, cg.uniform, 'all'),
-        VGG.VGG(10, cg.linear, 'slow_exp'),
+        VGG.VGG(10, cg.four_steps, 'all'),
+        VGG.VGG(10, cg.mag_steps, 'all'),
     ]
-    comp_ratios = np.linspace(0.5, 1.0, 20)
+    comp_ratios = np.linspace(0.1, 1.0, 20)
     acc_dict = {}
     ratios_dict = {}
     for name, model in zip(names, models):

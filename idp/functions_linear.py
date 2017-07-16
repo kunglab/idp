@@ -31,8 +31,9 @@ class LinearFunction(function.Function):
                 b_type.shape[0] == w_type.shape[0],
             )
 
-    def __init__(self, coeffs):
+    def __init__(self, coeffs, bcoeffs=None):
         self.coeffs = coeffs
+        self.bcoeffs = bcoeffs
         
     def forward(self, inputs):
         x = _as_mat(inputs[0])
@@ -64,6 +65,15 @@ class LinearFunction(function.Function):
     def backward(self, inputs, grad_outputs):
         x = _as_mat(inputs[0])
         W = inputs[1]
+        
+        if self.bcoeffs is not None:
+            xp = cuda.get_array_module(*x)
+            coeffs = numpy.copy(self.bcoeffs)
+            coeffs = numpy.expand_dims(coeffs, 0)        
+            coeffs = numpy.broadcast_to(coeffs, W.shape)
+            M = xp.asarray(coeffs,numpy.float32).reshape(W.shape)
+            self.M = M
+            
         W = self.M * W
         gy = grad_outputs[0]
 
@@ -80,8 +90,7 @@ class LinearFunction(function.Function):
         else:
             return gx, gW
 
-
-def linear(x, coeffs, W, b=None):
+def linear(x, coeffs, W, b=None, bcoeffs=None):
     """Linear function, or affine transformation.
 
     It accepts two or three arguments: an input minibatch ``x``, a weight
@@ -119,6 +128,6 @@ def linear(x, coeffs, W, b=None):
 
     """
     if b is None:
-        return LinearFunction(coeffs)(x, W)
+        return LinearFunction(coeffs, bcoeffs=bcoeffs)(x, W)
     else:
-        return LinearFunction(coeffs)(x, W, b)
+        return LinearFunction(coeffs, bcoeffs=bcoeffs)(x, W, b)

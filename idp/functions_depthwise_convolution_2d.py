@@ -23,8 +23,9 @@ def _matmul(a, b, xp):
 
 class DepthwiseConvolution2D(function.Function):
 
-    def __init__(self, coeffs, stride=1, pad=0):
+    def __init__(self, coeffs, stride=1, pad=0, bcoeffs=None):
         self.coeffs = coeffs
+        self.bcoeffs = bcoeffs
         self.sy, self.sx = _pair(stride)
         self.ph, self.pw = _pair(pad)
 
@@ -95,6 +96,21 @@ class DepthwiseConvolution2D(function.Function):
 
     def backward(self, inputs, grad_outputs):
         x, W = inputs[:2]
+        
+        if self.bcoeffs is not None:
+            xp = cuda.get_array_module(*x)
+
+            olen, ilen, hlen, wlen = W.shape
+            if self.coeffs is None:
+                self.coeffs = numpy.ones(ilen)
+            coeffs = numpy.copy(self.bcoeffs)
+            coeffs = numpy.expand_dims(coeffs, 1)
+            coeffs = numpy.expand_dims(coeffs, 1)
+            coeffs = numpy.expand_dims(coeffs, 0)        
+            coeffs = numpy.broadcast_to(coeffs, W.shape)
+            M = xp.asarray(coeffs,numpy.float32).reshape(W.shape)
+            self.M = M
+
         W = self.M*W
         b = inputs[2] if len(inputs) == 3 else None
         gy = grad_outputs[0]
@@ -136,7 +152,7 @@ class DepthwiseConvolution2D(function.Function):
             return gx, gW, gb
 
 
-def depthwise_convolution_2d(x, coeffs, W, b=None, stride=1, pad=0):
+def depthwise_convolution_2d(x, coeffs, W, b=None, stride=1, pad=0, bcoeffs=None):
     """Two-dimensional depthwise convolution function.
 
     This is an implementation of two-dimensional depthwise convolution.
@@ -201,7 +217,7 @@ def depthwise_convolution_2d(x, coeffs, W, b=None, stride=1, pad=0):
         (2, 6, 2, 5)
 
     """
-    func = DepthwiseConvolution2D(coeffs, stride, pad)
+    func = DepthwiseConvolution2D(coeffs, stride, pad, bcoeffs=bcoeffs)
     if b is None:
         return func(x, W)
     else:

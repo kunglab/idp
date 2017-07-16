@@ -115,7 +115,7 @@ class IncompleteLinear(link.Link):
     def _initialize_params(self, in_size):
         self.W.initialize((self.out_size, in_size))
 
-    def __call__(self, x, coeffs=None):
+    def __call__(self, x, coeffs=None, bcoeffs=None):
         """Applies the linear layer.
 
         Args:
@@ -127,4 +127,4 @@ class IncompleteLinear(link.Link):
         """
         if self.W.data is None:
             self._initialize_params(x.size // x.shape[0])
-        return linear(x, coeffs, self.W, self.b)
+        return linear(x, coeffs, self.W, self.b, bcoeffs=bcoeffs)

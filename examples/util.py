@@ -64,6 +64,7 @@ def get_idp_acc(model, dataset_tuple, comp_ratio, profile=0, batchsize=1024, gpu
 
 
 def sweep_idp(model, dataset, comp_ratios, args, profile=0):
+    chainer.config.train = False
     accs = []
     for cr in comp_ratios:
         accs.append(get_idp_acc(model, dataset, comp_ratio=cr,
@@ -73,6 +74,7 @@ def sweep_idp(model, dataset, comp_ratios, args, profile=0):
 
 
 def train_model_profiles(model, train, test, args):
+    chainer.config.train = True
     if args.gpu >= 0:
         cuda.get_device(args.gpu).use()
         model.to_gpu()
@@ -94,7 +96,11 @@ def train_model(model, train, test, args):
         model.to_gpu()
 
     xp = np if args.gpu < 0 else cuda.cupy
-    if args.opt == 'momentum':
+    if args.opt == 'sgd':
+        opt = chainer.optimizers.SGD(args.learnrate)
+        opt.setup(model)
+        opt.add_hook(chainer.optimizer.WeightDecay(5e-4))
+    elif args.opt == 'momentum':
         opt = chainer.optimizers.MomentumSGD(args.learnrate)
         opt.setup(model)
         opt.add_hook(chainer.optimizer.WeightDecay(5e-4))

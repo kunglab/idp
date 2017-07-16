@@ -149,13 +149,15 @@ class DepthwiseConvolution2D(function.Function):
             gx = conv.col2im_gpu(gcol, self.sy, self.sx,
                                  self.ph, self.pw, h, w)
         
-        gW = self.mW * gW
+        if hasattr(self,'mW'):
+            gW = self.mW * gW        
         if b is None:
             return gx, gW
         else:
             gy = xp.rollaxis(gy, 1, 4)
             gb = gy.sum(axis=(0, 1, 2))
-            gb = self.mb * gb
+            if hasattr(self,'mb'):
+                gb = self.mb * gb     
             return gx, gW, gb
 
 

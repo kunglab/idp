@@ -87,9 +87,15 @@ class LinearFunction(function.Function):
                              .format(type(W), type(x)))
 
         gx = gy.dot(W).astype(x.dtype, copy=False).reshape(inputs[0].shape)
-        gW = self.mW * gy.T.dot(x).astype(W.dtype, copy=False)
+        gW = gy.T.dot(x).astype(W.dtype, copy=False)
+        
+        if hasattr(self,'mW'):
+            gW = self.mW * gW
+        # print(gW.sum(0).sum(0))
         if len(inputs) == 3:
-            gb = self.mb * gy.sum(0)
+            gb = gy.sum(0)
+            if hasattr(self,'mb'):
+                gb = self.mb * gb
             return gx, gW, gb
         else:
             return gx, gW

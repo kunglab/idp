@@ -81,7 +81,7 @@ class IncompleteDepthwiseConvolution2D(link.Link):
         if self.b is not None:
             self.b.initialize(self.channel_multiplier * in_channels)
 
-    def __call__(self, x, coeffs=None, bcoeffs=None):
+    def __call__(self, x, coeffs=None, bcoeffs=None, ocoeffs=None):
         """Applies the depthwise convolution layer.
 
         Args:
@@ -95,7 +95,7 @@ class IncompleteDepthwiseConvolution2D(link.Link):
         if self.W.data is None:
             self._initialize_params(x.shape[1])
         return depthwise_convolution_2d(
-            x, coeffs, self.W, self.b, self.stride, self.pad, bcoeffs=bcoeffs)
+            x, coeffs, self.W, self.b, self.stride, self.pad, bcoeffs=bcoeffs, ocoeffs=ocoeffs)
 
 
 def _pair(x):

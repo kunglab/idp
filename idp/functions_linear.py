@@ -31,9 +31,10 @@ class LinearFunction(function.Function):
                 b_type.shape[0] == w_type.shape[0],
             )
 
-    def __init__(self, coeffs, bcoeffs=None):
+    def __init__(self, coeffs, bcoeffs=None, ocoeffs=None):
         self.coeffs = coeffs
         self.bcoeffs = bcoeffs
+        self.ocoeffs = ocoeffs
         
     def forward(self, inputs):
         x = _as_mat(inputs[0])
@@ -71,9 +72,12 @@ class LinearFunction(function.Function):
             coeffs = numpy.copy(self.bcoeffs)
             coeffs = numpy.expand_dims(coeffs, 0)        
             coeffs = numpy.broadcast_to(coeffs, W.shape)
-            M = xp.asarray(coeffs,numpy.float32).reshape(W.shape)
-            self.M = M
-            
+            self.mW = xp.asarray(coeffs,numpy.float32).reshape(W.shape)
+        if self.ocoeffs is not None:
+            xp = cuda.get_array_module(*x)
+            coeffs = numpy.copy(self.ocoeffs)
+            self.mb = xp.asarray(coeffs,numpy.float32)
+
         W = self.M * W
         gy = grad_outputs[0]
 
@@ -83,14 +87,14 @@ class LinearFunction(function.Function):
                              .format(type(W), type(x)))
 
         gx = gy.dot(W).astype(x.dtype, copy=False).reshape(inputs[0].shape)
-        gW = gy.T.dot(x).astype(W.dtype, copy=False)
+        gW = self.mW * gy.T.dot(x).astype(W.dtype, copy=False)
         if len(inputs) == 3:
-            gb = gy.sum(0)
+            gb = self.mb * gy.sum(0)
             return gx, gW, gb
         else:
             return gx, gW
 
-def linear(x, coeffs, W, b=None, bcoeffs=None):
+def linear(x, coeffs, W, b=None, bcoeffs=None, ocoeffs=None):
     """Linear function, or affine transformation.
 
     It accepts two or three arguments: an input minibatch ``x``, a weight
@@ -128,6 +132,6 @@ def linear(x, coeffs, W, b=None, bcoeffs=None):
 
     """
     if b is None:
-        return LinearFunction(coeffs, bcoeffs=bcoeffs)(x, W)
+        return LinearFunction(coeffs, bcoeffs=bcoeffs, ocoeffs=ocoeffs)(x, W)
     else:
-        return LinearFunction(coeffs, bcoeffs=bcoeffs)(x, W, b)
+        return LinearFunction(coeffs, bcoeffs=bcoeffs, ocoeffs=ocoeffs)(x, W, b)

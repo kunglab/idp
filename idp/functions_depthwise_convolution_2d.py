@@ -23,8 +23,9 @@ def _matmul(a, b, xp):
 
 class DepthwiseConvolution2D(function.Function):
 
-    def __init__(self, coeffs, stride=1, pad=0, bcoeffs=None):
+    def __init__(self, coeffs, stride=1, pad=0, bcoeffs=None, ocoeffs=None):
         self.coeffs = coeffs
+        self.ocoeffs = ocoeffs
         self.bcoeffs = bcoeffs
         self.sy, self.sx = _pair(stride)
         self.ph, self.pw = _pair(pad)
@@ -108,9 +109,13 @@ class DepthwiseConvolution2D(function.Function):
             coeffs = numpy.expand_dims(coeffs, 1)
             coeffs = numpy.expand_dims(coeffs, 0)        
             coeffs = numpy.broadcast_to(coeffs, W.shape)
-            M = xp.asarray(coeffs,numpy.float32).reshape(W.shape)
-            self.M = M
-
+            self.mW = xp.asarray(coeffs,numpy.float32).reshape(W.shape)
+        
+        if self.ocoeffs is not None:
+            xp = cuda.get_array_module(*x)
+            coeffs = numpy.copy(self.ocoeffs)
+            self.mb = xp.asarray(coeffs,numpy.float32)
+            
         W = self.M*W
         b = inputs[2] if len(inputs) == 3 else None
         gy = grad_outputs[0]
@@ -143,16 +148,18 @@ class DepthwiseConvolution2D(function.Function):
         else:
             gx = conv.col2im_gpu(gcol, self.sy, self.sx,
                                  self.ph, self.pw, h, w)
-
+        
+        gW = self.mW * gW
         if b is None:
             return gx, gW
         else:
             gy = xp.rollaxis(gy, 1, 4)
             gb = gy.sum(axis=(0, 1, 2))
+            gb = self.mb * gb
             return gx, gW, gb
 
 
-def depthwise_convolution_2d(x, coeffs, W, b=None, stride=1, pad=0, bcoeffs=None):
+def depthwise_convolution_2d(x, coeffs, W, b=None, stride=1, pad=0, bcoeffs=None, ocoeffs=None):
     """Two-dimensional depthwise convolution function.
 
     This is an implementation of two-dimensional depthwise convolution.
@@ -217,7 +224,7 @@ def depthwise_convolution_2d(x, coeffs, W, b=None, stride=1, pad=0, bcoeffs=None
         (2, 6, 2, 5)
 
     """
-    func = DepthwiseConvolution2D(coeffs, stride, pad, bcoeffs=bcoeffs)
+    func = DepthwiseConvolution2D(coeffs, stride, pad, bcoeffs=bcoeffs, ocoeffs=ocoeffs)
     if b is None:
         return func(x, W)
     else:

@@ -138,7 +138,7 @@ class IncompleteConvolution2D(link.Link):
         W_shape = (self.out_channels, in_channels, kh, kw)
         self.W.initialize(W_shape)
 
-    def __call__(self, x, coeffs=None, bcoeffs=None):
+    def __call__(self, x, coeffs=None, bcoeffs=None, ocoeffs=None):
         """Applies the convolution layer.
 
         Args:
@@ -151,7 +151,7 @@ class IncompleteConvolution2D(link.Link):
         if self.W.data is None:
             self._initialize_params(x.shape[1])
         return convolution_2d(
-            x, coeffs, self.W, self.b, self.stride, self.pad, bcoeffs=bcoeffs)
+            x, coeffs, self.W, self.b, self.stride, self.pad, bcoeffs=bcoeffs, ocoeffs=ocoeffs)
 
 
 def _pair(x):

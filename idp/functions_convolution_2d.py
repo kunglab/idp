@@ -34,7 +34,7 @@ def _pair(x):
 
 class Convolution2DFunction(function.Function):
 
-    def __init__(self, coeffs, stride=1, pad=0, cover_all=False, requires_x_grad=True, bcoeffs=None, 
+    def __init__(self, coeffs, stride=1, pad=0, cover_all=False, requires_x_grad=True, bcoeffs=None, ocoeffs=None,  
                  **kwargs):
         argument.check_unexpected_kwargs(
             kwargs, deterministic="deterministic argument is not "
@@ -44,6 +44,7 @@ class Convolution2DFunction(function.Function):
         argument.assert_kwargs_empty(kwargs)
         
         self.coeffs = coeffs
+        self.ocoeffs = ocoeffs
         self.bcoeffs = bcoeffs
         self.sy, self.sx = _pair(stride)
         self.ph, self.pw = _pair(pad)
@@ -211,9 +212,12 @@ class Convolution2DFunction(function.Function):
             coeffs = numpy.expand_dims(coeffs, 1)
             coeffs = numpy.expand_dims(coeffs, 0)        
             coeffs = numpy.broadcast_to(coeffs, W.shape)
-            M = numpy.asarray(coeffs,numpy.float32).reshape(W.shape)
-            self.M = M 
+            self.mW = numpy.asarray(coeffs,numpy.float32).reshape(W.shape)
             
+        if self.ocoeffs is not None:
+            coeffs = numpy.copy(self.ocoeffs)
+            self.mb = numpy.asarray(coeffs,numpy.float32)    
+                    
         W = self.M*W
         b = inputs[2] if len(inputs) == 3 else None
 
@@ -240,11 +244,13 @@ class Convolution2DFunction(function.Function):
             gcol = numpy.rollaxis(gcol, 3)
             gx = conv.col2im_cpu(gcol, self.sy, self.sx, self.ph, self.pw,
                                  h, w)
-
+        
+        gW = self.mW * gW        
         if b is None:
             return gx, gW
         else:
             gb = gy.sum(axis=(0, 2, 3))
+            gb = self.mb * gb
             return gx, gW, gb
 
     def backward_gpu(self, inputs, grad_outputs):
@@ -259,8 +265,11 @@ class Convolution2DFunction(function.Function):
             coeffs = numpy.expand_dims(coeffs, 1)
             coeffs = numpy.expand_dims(coeffs, 0)        
             coeffs = numpy.broadcast_to(coeffs, W.shape)
-            M = cuda.cupy.asarray(coeffs,numpy.float32).reshape(W.shape)
-            self.M = M 
+            self.mW = cuda.cupy.asarray(coeffs,numpy.float32).reshape(W.shape)
+            
+        if self.ocoeffs is not None:
+            coeffs = numpy.copy(self.ocoeffs)
+            self.mb = cuda.cupy.asarray(coeffs,numpy.float32) 
         
         W = self.M*W
         b = inputs[2] if len(inputs) == 3 else None
@@ -369,13 +378,15 @@ class Convolution2DFunction(function.Function):
             if b is not None:
                 gb = gy.sum(axis=(0, 2, 3))
 
+        gW = self.mW * gW        
         if b is None:
             return gx, gW
         else:
+            gb = self.mb * gb
             return gx, gW, gb
+        
 
-
-def convolution_2d(x, coeffs, W, b=None, stride=1, pad=0, cover_all=False, bcoeffs=None, **kwargs):
+def convolution_2d(x, coeffs, W, b=None, stride=1, pad=0, cover_all=False, bcoeffs=None, ocoeffs=None, **kwargs):
     """convolution_2d(x, W, b=None, stride=1, pad=0, cover_all=False)
 
     Two-dimensional convolution function.
@@ -500,7 +511,7 @@ cover_all=True)
     argument.assert_kwargs_empty(kwargs)
 
     requires_x_grad = isinstance(x, variable.Variable) and x.requires_grad
-    func = Convolution2DFunction(coeffs, stride, pad, cover_all, requires_x_grad, bcoeffs=bcoeffs)
+    func = Convolution2DFunction(coeffs, stride, pad, cover_all, requires_x_grad, bcoeffs=bcoeffs, ocoeffs=ocoeffs)
     if b is None:
         return func(x, W)
     else:

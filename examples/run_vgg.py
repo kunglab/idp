@@ -6,7 +6,7 @@ if __name__ == '__main__':
     Settings used to generate figures in paper for VGG.
     '''
     args = util.default_parser().parse_args()
-    args.epoch = 5
+    args.epoch = 40
     args.batchsize = 256
     args.dataset = 'cifar10'
     # args.ext = 'pdf'

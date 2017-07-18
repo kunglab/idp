@@ -30,11 +30,14 @@ class Block(chainer.Chain):
                 out_channels, ksize, pad=pad, nobias=True)
             self.bn = L.BatchNormalization(out_channels)
 
-    def __call__(self, x, profile, comp_ratio=None):
+    def __call__(self, x, profile, comp_ratio=None, ignore=False):
         params = layer_profile(self.coeff_generator,
                                *self.profiles[profile], self.in_channels,
                                self.out_channels, comp_ratio)
-        h = self.conv(x, *params)
+        if ignore:
+            h = self.conv(x)
+        else:
+            h = self.conv(x, *params)
         h = self.bn(h)
         return F.relu(h)
 
@@ -48,6 +51,7 @@ class VGG(chainer.Chain):
         with self.init_scope():
             self.p0_block1_1 = Block(3, 64, 3, cg.uniform, profiles)
             self.p1_block1_1 = Block(3, 64, 3, cg.uniform, profiles)
+            self.p2_block1_1 = Block(3, 64, 3, cg.uniform, profiles)
             self.block1_2 = Block(64, 64, 3, coeff_generator, profiles)
             self.block2_1 = Block(64, 128, 3, coeff_generator, profiles)
             self.block2_2 = Block(128, 128, 3, coeff_generator, profiles)
@@ -64,6 +68,7 @@ class VGG(chainer.Chain):
             self.bn_fc1 = L.BatchNormalization(512)
             self.p0_fc2 = IncompleteLinear(None, class_labels, nobias=True)
             self.p1_fc2 = IncompleteLinear(None, class_labels, nobias=True)
+            self.p2_fc2 = IncompleteLinear(None, class_labels, nobias=True)
 
     def __call__(self, x, t, ret_param='loss', profile=None, comp_ratio=None):
         if profile == None:
@@ -71,9 +76,11 @@ class VGG(chainer.Chain):
 
         # 64 channel blocks:
         if profile == 0:
-            h = self.p0_block1_1(x, profile, 1.0)
+            h = self.p0_block1_1(x, profile, 1.0, ignore=True)
         elif profile == 1:
-            h = self.p1_block1_1(x, profile, 1.0)
+            h = self.p1_block1_1(x, profile, 1.0, ignore=True)
+        elif profile == 2:
+            h = self.p2_block1_1(x, profile, 1.0, ignore=True)
         else:
             raise ValueError('profile: {}'.format(profile))
 
@@ -121,6 +128,8 @@ class VGG(chainer.Chain):
             h = self.p0_fc2(h, 1.0)
         elif profile == 1:
             h = self.p1_fc2(h, 1.0)
+        elif profile == 2:
+            h = self.p2_fc2(h, 1.0)
         else:
             raise ValueError('profile: {}'.format(profile))
 

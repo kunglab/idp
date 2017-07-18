@@ -378,7 +378,7 @@ class Convolution2DFunction(function.Function):
             if b is not None:
                 gb = gy.sum(axis=(0, 2, 3))
 
-        gW = self.mW * gW
+        # gW = self.mW * gW
         if hasattr(self,'mW'):
             gW = self.mW * gW         
         if b is None:

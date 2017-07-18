@@ -32,11 +32,14 @@ def step(n, steps=[1]):
         i = i + 1
     return coeffs[:n]
 
+
 def three_steps(n):
     return step(n, steps=[1, 0.5, 0.25])
 
+
 def four_steps(n):
-    return step(n, steps=[1, 0.5, 0.25, 0.0])
+    return step(n, steps=[1, 0.75, 0.5, 0.25])
+
 
 def mag_steps(n):
     return step(n, steps=[1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5])

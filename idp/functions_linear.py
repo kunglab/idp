@@ -93,7 +93,7 @@ class LinearFunction(function.Function):
             gW = self.mW * gW
             if hasattr(self,'mb'):
                 xp = cuda.get_array_module(*x)
-                gW = xp.broadcast_to(self.mb,gW.shape) * gW
+                gW = xp.broadcast_to(xp.expand_dims(self.mb,1),gW.shape) * gW
         # print('gW',gW.sum(0).sum(0))
         if len(inputs) == 3:
             gb = gy.sum(0)

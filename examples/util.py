@@ -100,7 +100,6 @@ def train_model_profiles(model, train, test, args):
     for profile in range(len(model.profiles)):
         init_model(model, train, profile=profile)
 
-    # assert False
     # train each model
     for profile in range(len(model.profiles)):
         model.profile = profile

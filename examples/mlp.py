@@ -18,7 +18,7 @@ def run(args):
     colors = [vz.colors.all_one_lg, vz.colors.all_one_lg, vz.colors.all_one_lg]
     models = [
         # MLP.MLP(10, two_step, 'all'),
-        MLP.MLP(10, cg.uniform, [(0, 3), (3, 7), (7, 10)], n_units=100),
+        MLP.MLP(10, cg.four_steps, [(0, 2), (2, 10)], n_units=100),
         # MLP.MLP(10, cg.linear, 'all'),
         # MLP.MLP(10, two_steps, 'all'),
         # MLP.MLP(10, cg.three_steps),
@@ -43,7 +43,7 @@ def run(args):
             folder=args.figure_path, ext=args.ext,
             xlabel='Dot Product Component (%)',
             ylabel='Classification Accuracy (%)',
-            title='MLP (MNIST)', ylim=(95, 100))
+            title='MLP (MNIST)', ylim=(90, 100))
 
 
 if __name__ == '__main__':

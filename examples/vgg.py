@@ -16,7 +16,7 @@ def run(args):
     names = ['standard', 'four steps', 'magnitude steps']
     colors = [vz.colors.all_one_lg, vz.colors.linear_sm, vz.colors.linear_lg]
     models = [
-        VGG.VGG(10, cg.uniform, profiles=[(0, 8), (8, 10)])
+        VGG.VGG(10, cg.uniform, profiles=[(0, 6), (6, 8), (8, 10)])
     ]
     comp_ratios = np.linspace(0.1, 1, 20)
     acc_dict = {}

@@ -23,9 +23,10 @@ class MLP(chainer.Chain):
         self.profiles = profiles
         self.profile = 0
         with self.init_scope():
-            self.p0_l1 = IncompleteLinear(None, self.n_units)
-            self.p1_l1 = IncompleteLinear(None, self.n_units)
-            self.p2_l1 = IncompleteLinear(None, self.n_units)
+            # self.p0_l1 = IncompleteLinear(None, self.n_units)
+            # self.p1_l1 = IncompleteLinear(None, self.n_units)
+            # self.p2_l1 = IncompleteLinear(None, self.n_units)
+            self.l1 = IncompleteLinear(None, self.n_units)
             self.l2 = IncompleteLinear(self.n_units, self.n_units)
             self.p0_l3 = IncompleteLinear(None, class_labels)
             self.p1_l3 = IncompleteLinear(None, class_labels)
@@ -35,21 +36,25 @@ class MLP(chainer.Chain):
         if profile == None:
             profile = self.profile
 
+        import numpy as np
         params = layer_profile(self.coeff_generator,
                                *self.profiles[profile], self.n_units,
                                self.n_units, comp_ratio)
         if profile == 0:
-            h = F.relu(self.p0_l1(x))
+            # h = F.relu(self.p0_l1(x))
+            h = F.relu(self.l1(x, [1], [1], np.ones(self.n_units)))
             h = self.l2(h, *params)
             h = F.relu(h)
             h = self.p0_l3(h)
         elif profile == 1:
-            h = F.relu(self.p1_l1(x))
+            # h = F.relu(self.p1_l1(x))
+            h = F.relu(self.l1(x, [1], [0], np.zeros(self.n_units)))
             h = self.l2(h, *params)
             h = F.relu(h)
             h = self.p1_l3(h)
         elif profile == 2:
-            h = F.relu(self.p2_l1(x))
+            # h = F.relu(self.p2_l1(x))
+            h = F.relu(self.l1(x, [1], [0], np.zeros(self.n_units)))
             h = self.l2(h, *params)
             h = F.relu(h)
             h = self.p2_l3(h)

@@ -13,23 +13,28 @@ import idp.coeffs_generator as cg
 
 def run(args):
     train, test = util.get_dataset(args.dataset)
-    names = ['all-ones (standard)', 'four steps', 'magnitude steps']
+    names = ['standard', 'four steps', 'magnitude steps']
     colors = [vz.colors.all_one_lg, vz.colors.linear_sm, vz.colors.linear_lg]
     models = [
-        VGG.VGG(10, cg.uniform, 'all'),
-        VGG.VGG(10, cg.four_steps, 'all'),
-        VGG.VGG(10, cg.mag_steps, 'all'),
+        VGG.VGG(10, cg.uniform, profiles=[(0, 8), (8, 10)])
     ]
-    comp_ratios = np.linspace(0.1, 1.0, 20)
+    comp_ratios = np.linspace(0.1, 1, 20)
     acc_dict = {}
     ratios_dict = {}
+    key_names = []
     for name, model in zip(names, models):
-        util.load_or_train_model(model, train, test, args)
-        acc_dict[name] = util.sweep_idp(model, test, comp_ratios, args)
-        ratios_dict[name] = [100. * cr for cr in comp_ratios]
+        util.train_model_profiles(model, train, test, args)
+        for profile in range(len(model.profiles)):
+            key = name + '_' + str(profile)
+            key_names.append(key)
+            acc_dict[key] = util.sweep_idp(
+                model, test, comp_ratios, args, profile=profile)
+            ratios_dict[key] = [100. * cr for cr in comp_ratios]
+
+
 
     filename = "VGG_{}".format(args.dataset)
-    vz.plot(ratios_dict, acc_dict, names, filename, colors=colors,
+    vz.plot(ratios_dict, acc_dict, key_names, filename, colors=colors,
             folder=args.figure_path, ext=args.ext,
             xlabel='Dot Product Component (%)',
             ylabel='Classification Accuracy (%)')

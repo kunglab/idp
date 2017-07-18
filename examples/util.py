@@ -63,6 +63,14 @@ def get_idp_acc(model, dataset_tuple, comp_ratio, profile=0, batchsize=1024, gpu
     return (accs / len(x)) * 100.
 
 
+def init_model(model, dataset_tuple, profile=0, batchsize=1024, gpu=0):
+    xp = np if gpu < 0 else cuda.cupy
+    x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
+    x_batch = xp.array(x[:batchsize])
+    y_batch = xp.array(y[:batchsize])
+    _ = model(x_batch, y_batch, profile=profile)
+
+
 def sweep_idp(model, dataset, comp_ratios, args, profile=0):
     chainer.config.train = False
     accs = []
@@ -75,16 +83,26 @@ def sweep_idp(model, dataset, comp_ratios, args, profile=0):
 
 def train_model_profiles(model, train, test, args):
     chainer.config.train = True
+    name = model.param_names()
+    model_folder = os.path.join(args.model_path, name)
+
+    # load model
+    if os.path.exists(model_folder) or args.overwrite_models:
+        print(model_folder)
+        load_model(model, model_folder, gpu=args.gpu)
+        return
+
     if args.gpu >= 0:
         cuda.get_device(args.gpu).use()
         model.to_gpu()
 
     # init the params for each profiles
-    for profile in model.profiles():
-         get_idp_acc(model, train, 1.0, profile=profile)
-    
+    for profile in range(len(model.profiles)):
+        init_model(model, train, profile=profile)
+
+    # assert False
     # train each model
-    for profile in model.profiles():
+    for profile in range(len(model.profiles)):
         model.profile = profile
         train_model(model, train, test, args)
 
@@ -99,12 +117,12 @@ def train_model(model, train, test, args):
     if args.opt == 'sgd':
         opt = chainer.optimizers.SGD(args.learnrate)
         opt.setup(model)
-        if hasattr(args,'decay'):
+        if hasattr(args, 'decay'):
             opt.add_hook(chainer.optimizer.WeightDecay(5e-4))
     elif args.opt == 'momentum':
         opt = chainer.optimizers.MomentumSGD(args.learnrate)
         opt.setup(model)
-        if hasattr(args,'decay'):
+        if hasattr(args, 'decay'):
             opt.add_hook(chainer.optimizer.WeightDecay(5e-4))
     elif args.opt == 'adam':
         opt = optimizers.Adam(args.learnrate)
@@ -168,19 +186,6 @@ def get_dataset(dataset_name):
     if dataset_name == 'cifar10':
         return get_cifar10(ndim=3)
     raise NameError('{}'.format(dataset_name))
-
-
-# small vs large only from device perspective
-# def get_net_settings(dataset_name, size='large'):
-#     if dataset_name == 'mnist' and size == 'large':
-#         return (8, 4), 16, None
-#     if dataset_name == 'mnist' and size == 'small':
-#         return (8, 2), 16, None
-#     if dataset_name == 'cifar10' and size == 'large':
-#         return 16, 64, 128
-#     if dataset_name == 'cifar10' and size == 'small':
-#         return (16, 8), 32, 64
-#     raise NameError('{}'.format(dataset_name))
 
 
 def default_parser(description=''):

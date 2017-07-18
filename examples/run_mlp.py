@@ -7,7 +7,7 @@ if __name__ == '__main__':
     '''
     args = util.default_parser().parse_args()
     args.opt = 'momentum'
-    args.epoch = 20
+    args.epoch = 50
     args.batchsize = 128
     args.dataset = 'mnist'
     args.ext = 'png'

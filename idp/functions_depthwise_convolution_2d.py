@@ -151,6 +151,11 @@ class DepthwiseConvolution2D(function.Function):
         
         if hasattr(self,'mW'):
             gW = self.mW * gW        
+            if hasattr(self,'mb'):
+                xp = cuda.get_array_module(*x)
+                gW = xp.broadcast_to(
+                    xp.expand_dims(xp.expand_dims(xp.expand_dims(self.mb,1),1),0)
+                    ,gW.shape) * gW
         if b is None:
             return gx, gW
         else:

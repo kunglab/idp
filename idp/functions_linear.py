@@ -70,7 +70,7 @@ class LinearFunction(function.Function):
         if self.bcoeffs is not None:
             xp = cuda.get_array_module(*x)
             coeffs = numpy.copy(self.bcoeffs)
-            coeffs = numpy.expand_dims(coeffs, 0)        
+            coeffs = numpy.expand_dims(coeffs, 0)
             coeffs = numpy.broadcast_to(coeffs, W.shape)
             self.mW = xp.asarray(coeffs,numpy.float32).reshape(W.shape)
         if self.ocoeffs is not None:
@@ -91,6 +91,9 @@ class LinearFunction(function.Function):
         
         if hasattr(self,'mW'):
             gW = self.mW * gW
+            if hasattr(self,'mb'):
+                xp = cuda.get_array_module(*x)
+                gW = xp.broadcast_to(self.mb,gW.shape) * gW
         # print('gW',gW.sum(0).sum(0))
         if len(inputs) == 3:
             gb = gy.sum(0)

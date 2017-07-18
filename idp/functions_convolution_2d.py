@@ -245,12 +245,19 @@ class Convolution2DFunction(function.Function):
             gx = conv.col2im_cpu(gcol, self.sy, self.sx, self.ph, self.pw,
                                  h, w)
         
-        gW = self.mW * gW        
+        if hasattr(self,'mW'):
+            gW = self.mW * gW        
+            if hasattr(self,'mb'):
+                xp = cuda.get_array_module(*x)
+                gW = xp.broadcast_to(
+                    xp.expand_dims(xp.expand_dims(xp.expand_dims(self.mb,1),1),1)
+                    ,gW.shape) * gW
         if b is None:
             return gx, gW
         else:
             gb = gy.sum(axis=(0, 2, 3))
-            gb = self.mb * gb
+            if hasattr(self,'mb'):
+                gb = self.mb * gb
             return gx, gW, gb
 
     def backward_gpu(self, inputs, grad_outputs):
@@ -381,6 +388,11 @@ class Convolution2DFunction(function.Function):
         # gW = self.mW * gW
         if hasattr(self,'mW'):
             gW = self.mW * gW         
+            if hasattr(self,'mb'):
+                xp = cuda.get_array_module(*x)
+                gW = xp.broadcast_to(
+                    xp.expand_dims(xp.expand_dims(xp.expand_dims(self.mb,1),1),1)
+                    ,gW.shape) * gW
         if b is None:
             return gx, gW
         else:

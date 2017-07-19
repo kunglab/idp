@@ -13,16 +13,14 @@ import util
 
 def run(args):
     train, test = util.get_dataset(args.dataset)
-    names = ['all-ones (standard)', 'linear']
+    names = ['all-one (standard)', 'linear']
     colors = [vz.colors.all_one_lg, vz.colors.linear_lg]
     models = [
-        # MobileNet.MobileNet(10, cg.uniform, 'slow_exp'),
         MobileNet.MobileNet(10, cg.uniform, 'all'),
         MobileNet.MobileNet(10, cg.linear, 'slow_exp'),
-        # MobileNet.MobileNet(10, cg.linear, 'all'),
     ]
 
-    comp_ratios = np.linspace(.5, 1, 20)
+    comp_ratios = np.linspace(.1, 1, 20)
     acc_dict = {}
     ratios_dict = {}
     for name, model in zip(names, models):
@@ -33,7 +31,8 @@ def run(args):
     filename = "MobileNet_{}".format(args.dataset)
     vz.plot(ratios_dict, acc_dict, names, filename, colors=colors,
             folder=args.figure_path, ext=args.ext,
-            xlabel='Dot Product Component (%)',
+            title='MobileNet (CIFAR-10)',
+            xlabel='IDP (%)',
             ylabel='Classification Accuracy (%)')
 
 

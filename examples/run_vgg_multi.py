@@ -1,4 +1,4 @@
-import vgg
+import vgg_multi
 import util
 
 if __name__ == '__main__':
@@ -10,4 +10,4 @@ if __name__ == '__main__':
     args.batchsize = 256
     args.dataset = 'cifar10'
     args.ext = 'pdf'
-    vgg.run(args)
+    vgg_multi.run(args)

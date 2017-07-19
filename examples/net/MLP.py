@@ -16,17 +16,18 @@ import util
 
 
 class MLP(chainer.Chain):
-    def __init__(self, class_labels, coeff_generator, profiles, n_units=100):
+    def __init__(self, class_labels, coeff_generator, profiles=None, n_units=100):
         super(MLP, self).__init__()
+        if profiles == None:
+            profiles = [(0, 10)]
         self.coeff_generator = coeff_generator
         self.n_units = n_units
         self.profiles = profiles
         self.profile = 0
         with self.init_scope():
-            # self.p0_l1 = IncompleteLinear(None, self.n_units)
-            # self.p1_l1 = IncompleteLinear(None, self.n_units)
-            # self.p2_l1 = IncompleteLinear(None, self.n_units)
-            self.l1 = IncompleteLinear(None, self.n_units)
+            self.p0_l1 = IncompleteLinear(None, self.n_units)
+            self.p1_l1 = IncompleteLinear(None, self.n_units)
+            self.p2_l1 = IncompleteLinear(None, self.n_units)
             self.l2 = IncompleteLinear(self.n_units, self.n_units)
             self.p0_l3 = IncompleteLinear(None, class_labels)
             self.p1_l3 = IncompleteLinear(None, class_labels)
@@ -41,24 +42,20 @@ class MLP(chainer.Chain):
                                *self.profiles[profile], self.n_units,
                                self.n_units, comp_ratio)
         if profile == 0:
-            # h = F.relu(self.p0_l1(x))
-            h = F.relu(self.l1(x, [1], [1], np.ones(self.n_units)))
+            h = F.relu(self.p0_l1(x))
             h = self.l2(h, *params)
             h = F.relu(h)
             h = self.p0_l3(h)
         elif profile == 1:
-            # h = F.relu(self.p1_l1(x))
-            h = F.relu(self.l1(x, [1], [0], np.zeros(self.n_units)))
+            h = F.relu(self.p1_l1(x))
             h = self.l2(h, *params)
             h = F.relu(h)
             h = self.p1_l3(h)
         elif profile == 2:
-            # h = F.relu(self.p2_l1(x))
-            h = F.relu(self.l1(x, [1], [0], np.zeros(self.n_units)))
+            h = F.relu(self.p2_l1(x))
             h = self.l2(h, *params)
             h = F.relu(h)
             h = self.p2_l3(h)
-
 
         report = {
             'loss': F.softmax_cross_entropy(h, t),
@@ -72,4 +69,6 @@ class MLP(chainer.Chain):
         return ['validation/main/acc']
 
     def param_names(self):
-        return 'MLP_{}_{}_p{}'.format(self.n_units, self.coeff_generator.__name__, len(self.profiles))
+        if len(self.profiles) > 1:
+            return 'MLP_{}_{}_p{}'.format(self.n_units, self.coeff_generator.__name__, len(self.profiles))
+        return 'MLP_{}_{}'.format(self.n_units, self.coeff_generator.__name__)

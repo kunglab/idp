@@ -15,13 +15,11 @@ import util
 
 def run(args):
     train, test = util.get_dataset(args.dataset)
-    names = ['all-ones (standard)', 'linear']
+    names = ['all-one (standard)', 'linear']
     colors = [vz.colors.all_one_lg, vz.colors.linear_lg]
     models = [
-        # BinaryNet.BinaryConvNet(10, cg.uniform, 'slow_exp'),
         BinaryNet.BinaryConvNet(10, cg.uniform, 'all'),
         BinaryNet.BinaryConvNet(10, cg.linear, 'slow_exp'),
-        # BinaryNet.BinaryConvNet(10, cg.linear, 'all'),
     ]
     comp_ratios = np.linspace(0.1, 1.0, 20)
     acc_dict = {}
@@ -34,7 +32,8 @@ def run(args):
     filename = "BinaryNet_{}".format(args.dataset)
     vz.plot(ratios_dict, acc_dict, names, filename, colors=colors,
             folder=args.figure_path, ext=args.ext,
-            xlabel='Dot Product Component (%)',
+            title='BinaryNet (MNIST)',
+            xlabel='IDP (%)',
             ylabel='Classification Accuracy (%)', ylim=(90, 100))
 
 

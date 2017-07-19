@@ -1,4 +1,4 @@
-import mlp
+import mlp_multi
 import util
 
 if __name__ == '__main__':
@@ -11,4 +11,4 @@ if __name__ == '__main__':
     args.batchsize = 128
     args.dataset = 'mnist'
     args.ext = 'pdf'
-    mlp.run(args)
+    mlp_multi.run(args)

@@ -46,8 +46,8 @@ def get_acc(model, dataset_tuple, ret_param='acc', batchsize=1024, gpu=0):
     return (accs / len(x)) * 100.
 
 
-def get_idp_acc(model, dataset_tuple, comp_ratio, profile=0, batchsize=1024, gpu=0):
-    chainer.config.train = False
+def get_idp_acc(model, dataset_tuple, comp_ratio, profile=None, batchsize=1024, gpu=0):
+    chainer.config.train = True
     xp = np if gpu < 0 else cuda.cupy
     x, y = dataset_tuple._datasets[0], dataset_tuple._datasets[1]
     accs = 0
@@ -55,8 +55,12 @@ def get_idp_acc(model, dataset_tuple, comp_ratio, profile=0, batchsize=1024, gpu
     for i in range(0, len(x), batchsize):
         x_batch = xp.array(x[i:i + batchsize])
         y_batch = xp.array(y[i:i + batchsize])
-        acc_data = model(x_batch, y_batch, comp_ratio=comp_ratio,
-                         ret_param='acc', profile=profile)
+        if profile == None:
+            acc_data = model(x_batch, y_batch, comp_ratio=comp_ratio,
+                            ret_param='acc')
+        else:
+            acc_data = model(x_batch, y_batch, comp_ratio=comp_ratio,
+                            ret_param='acc', profile=profile)
         acc_data.to_cpu()
         acc = acc_data.data
         accs += acc * len(x_batch)
@@ -71,7 +75,7 @@ def init_model(model, dataset_tuple, profile=0, batchsize=1024, gpu=0):
     _ = model(x_batch, y_batch, profile=profile)
 
 
-def sweep_idp(model, dataset, comp_ratios, args, profile=0):
+def sweep_idp(model, dataset, comp_ratios, args, profile=None):
     chainer.config.train = False
     accs = []
     for cr in comp_ratios:
@@ -86,9 +90,9 @@ def train_model_profiles(model, train, test, args):
     name = model.param_names()
     model_folder = os.path.join(args.model_path, name)
 
+    print(model_folder)
     # load model
     if os.path.exists(model_folder) or args.overwrite_models:
-        print(model_folder)
         load_model(model, model_folder, gpu=args.gpu)
         return
 

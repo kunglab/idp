@@ -16,7 +16,7 @@ def run(args):
     names = ['linear']
     colors = [vz.colors.linear_sm, vz.colors.linear_lg]
     models = [
-        VGG.VGG(10, cg.linear, profiles=[(0, 2), (2, 10)])
+        VGG.VGGMulti(10, cg.linear, profiles=[(0, 2), (2, 10)])
     ]
     comp_ratios = np.linspace(0.1, 1, 20)
     acc_dict = {}

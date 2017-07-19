@@ -27,7 +27,7 @@ def run(args):
         acc_dict[name] = util.sweep_idp(model, test, comp_ratios, args)
         ratios_dict[name] = [100. * cr for cr in comp_ratios]
 
-    filename = "VGG{}".format(args.dataset)
+    filename = "VGG_{}".format(args.dataset)
     vz.plot(ratios_dict, acc_dict, names, filename, colors=colors,
             folder=args.figure_path, ext=args.ext,
             title='VGG (CIFAR-10)',
